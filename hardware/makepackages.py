@@ -164,3 +164,9 @@ p = Header()
 p.Create( N=4, pinW=mm(1.09), rows=1, L=mm(12.7), W=mm(13.2), rowOff=mm(-13.2/2), exact=True );
 p.Info( mfg='Molex', pnum='0705530003', dk='WM4902-ND' );
 p.Print( "packages/molex_4" );
+
+# Dual inverter
+p = RectPart();
+p.Create( 6, W=mm(1.7), L=mm(3.1), pitch=mm(0.95), pinW=mm(0.5), pinL=mm(1.0), padExt=mm(3.2), name="74HC2G14", smt=True, exact=True )
+p.Info( mfg='Nexperia', pnum='74HC2G14GV,125', dk='1727-6046-1-ND' );
+p.Print( "packages/74HC2G14" );
