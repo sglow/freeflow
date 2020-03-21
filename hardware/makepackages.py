@@ -49,6 +49,12 @@ def Hirose(n, ra=False ):
 Hirose( 2, ra=True );
 Hirose( 4, ra=False );
 
+# 4-pin header for display
+p = Header()
+p.Info( mfg='Sullins', pnum='PPTC041LFBN-RC', dk='S7002-ND' )
+p.Create( N=4, pinW=mil(40), rows=1, pitch=mil(100), L=mil(420), W=mil(100), exact=True )
+p.Print( 'packages/CON4' )
+
 # Linear regulator
 p = Part();
 pi = PadInfo( pinW=mm(.95), pinL=mm(2.15), exact=True )
@@ -140,3 +146,15 @@ pi = PinInfo( pinW=mm(.8), exact=True );
 p.pins.append( Pin( n=1, x=0, y=mm(-2.54), info=pi ));
 p.pins.append( Pin( n=2, x=0, y=mm( 2.54), info=pi ));
 p.Print( 'packages/800AWS' );
+
+# Oscillator
+p = RectPart();
+p.Create( 4, W=mm(2.5), L=mm(3.2), pitch=mm(2.4), pinW=mm(1.4), pinL=mm(1.2), rowD=mm(1.9), name="osc", smt=True, exact=True )
+p.Info( mfg='Epson', pnum='SG-310SCF 25.0000MB3', dk='SER3652CT-ND' );
+p.Print( "packages/osc" );
+
+# Temperature / humidity sensor
+p = Header()
+p.Info( mfg='Honeywell', pnum='HIH8120-021-001', dk='480-5706-1-ND' )
+p.Create( N=4, pinW=mm(1.05), rows=1, pitch=mil(50), L=mm(4.9), W=m(2), exact=True )
+p.Print( 'packages/HIH8120' )

@@ -1,0 +1,4 @@
+rm -rf *~
+rm -f *.new.pcb *.net *.cmd *.bak
+rm -rf new.pcb
+rm -rf *.bak?

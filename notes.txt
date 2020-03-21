@@ -1,7 +1,4 @@
 Hardware needed:
-- Temp & humidity
-- Display - crystalfontz.com CFAL9664B?
-- Buttons and power switch
 - Wire the differential sensor up to use the programmable gain amp w/ filter
 - Include a space for a clock which I hope not to use
 
@@ -13,4 +10,6 @@ Hardware needed:
 - Gage pressure sensor
 - Encoder
 - Differential pressure sensor
-
+- Display - crystalfontz.com CFAL9664B?
+- Buttons and power switch
+- Temp & humidity

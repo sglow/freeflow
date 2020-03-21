@@ -5,14 +5,14 @@ C 54000 49600 1 0 0 STM32L412K.sym
 T 56300 54000 5 10 1 1 0 0 1
 device=STM32L412K
 T 56300 53700 5 10 1 1 0 0 1
-refdes=U1
+refdes=U?
 T 51900 53900 5 10 0 0 0 0 1
 footprint=STM32
 }
 C 41600 61100 1 0 1 header1x2.sym
 {
 T 41105 61795 5 10 1 1 0 6 1
-refdes=J1
+refdes=J?
 T 42805 58895 5 10 0 1 0 6 1
 footprint=header1x2
 T 44200 57800 5 10 0 0 0 6 1
@@ -23,7 +23,7 @@ C 42900 61300 1 0 0 diode-1.sym
 T 43300 61900 5 10 0 0 0 0 1
 device=DIODE
 T 43200 61800 5 10 1 1 0 0 1
-refdes=D1
+refdes=D?
 T 42900 61300 5 10 0 0 0 0 1
 footprint=diode
 }
@@ -35,7 +35,7 @@ C 47800 60500 1 0 0 tps7b.sym
 T 48200 62000 5 10 1 1 0 0 1
 device=TPS7B
 T 47800 60600 5 10 1 1 0 0 1
-refdes=U2
+refdes=U?
 T 46600 61200 5 10 0 0 0 0 1
 footprint=TPS7B
 }
@@ -49,7 +49,7 @@ C 47600 60600 1 90 0 capacitor-1.sym
 T 46900 60800 5 10 0 0 90 0 1
 device=CAPACITOR
 T 47200 61300 5 10 1 1 180 0 1
-refdes=C1
+refdes=C?
 T 46700 60800 5 10 0 0 90 0 1
 symversion=0.1
 T 46900 60700 5 10 1 1 0 0 1
@@ -63,7 +63,7 @@ C 50200 60600 1 90 0 capacitor-1.sym
 T 49500 60800 5 10 0 0 90 0 1
 device=CAPACITOR
 T 49800 61300 5 10 1 1 180 0 1
-refdes=C2
+refdes=C?
 T 49300 60800 5 10 0 0 90 0 1
 symversion=0.1
 T 49500 60700 5 10 1 1 0 0 1
@@ -80,11 +80,11 @@ N 55500 49600 55200 49600 4
 C 42500 56500 1 0 1 connector5-2.sym
 {
 T 41800 59000 5 10 1 1 0 0 1
-refdes=J2
+refdes=J?
 T 42200 58950 5 10 0 0 0 6 1
 device=CONNECTOR_5
 T 42200 59150 5 10 0 0 0 6 1
-footprint=SIP5N
+footprint=USB
 }
 T 42000 56000 9 10 1 0 0 0 1
 Micro USB
@@ -93,7 +93,7 @@ C 63600 32200 1 90 0 diode-1.sym
 T 63000 32600 5 10 0 0 90 0 1
 device=DIODE
 T 63100 32500 5 10 1 1 90 0 1
-refdes=D2
+refdes=D?
 T 63600 32200 5 10 0 0 90 0 1
 footprint=diode
 }
@@ -133,7 +133,7 @@ netname=USB_DM
 C 50000 61400 1 0 0 led-2.sym
 {
 T 50800 61700 5 10 1 1 0 0 1
-refdes=D3
+refdes=D?
 T 50100 62000 5 10 0 0 0 0 1
 device=LED
 T 50000 61400 5 10 0 0 0 0 1
@@ -143,7 +143,7 @@ C 51700 61200 1 0 0 gnd-1.sym
 C 66800 61200 1 270 0 led-2.sym
 {
 T 66500 60700 5 10 1 1 0 0 1
-refdes=D4
+refdes=D?
 T 67400 61100 5 10 0 0 270 0 1
 device=LED
 T 66800 61200 5 10 0 0 270 0 1
@@ -154,7 +154,7 @@ C 51800 61600 1 180 0 resistor-1.sym
 T 51500 61200 5 10 0 0 180 0 1
 device=RESISTOR
 T 51000 61200 5 10 1 1 0 0 1
-refdes=R1
+refdes=R?
 T 51300 61200 5 10 1 1 0 0 1
 value=150
 T 51800 61600 5 10 0 0 0 0 1
@@ -175,7 +175,7 @@ C 68700 58400 1 0 0 buzzer.sym
 T 69100 59600 5 10 1 1 0 0 1
 device=Buzzer
 T 69900 59600 5 10 1 1 0 0 1
-refdes=U3
+refdes=U?
 T 67500 58800 5 10 0 0 0 0 1
 footprint=buzzer
 }
@@ -187,7 +187,7 @@ C 66000 58100 1 0 0 dual_fet.sym
 T 66600 59800 5 10 0 1 0 0 1
 device=dual_fet
 T 66300 59800 5 10 1 1 0 0 1
-refdes=Q1
+refdes=Q?
 T 65300 59600 5 10 0 0 0 0 1
 footprint=dual_fet
 }
@@ -208,7 +208,7 @@ C 68400 58700 1 90 0 diode-1.sym
 T 67800 59100 5 10 0 0 90 0 1
 device=DIODE
 T 67900 59200 5 10 1 1 180 0 1
-refdes=D5
+refdes=D?
 T 68400 58700 5 10 0 0 90 0 1
 footprint=diode
 }
@@ -229,7 +229,7 @@ symversion=0.1
 T 42900 44400 5 10 0 0 0 0 1
 footprint=sm_0603
 T 43000 44900 5 10 1 1 0 0 1
-refdes=C3
+refdes=C?
 T 43300 44900 5 10 1 1 0 0 1
 value=1nF
 }
@@ -280,7 +280,7 @@ C 49600 43100 1 0 0 MP3V5004DP.sym
 T 49600 45000 5 10 1 1 0 0 1
 device=MP3V5004DP
 T 50000 44800 5 10 1 1 0 0 1
-refdes=U4
+refdes=U?
 T 50000 44600 5 10 0 0 0 0 1
 footprint=MP3V5004DP
 }
@@ -301,7 +301,7 @@ C 67100 43700 1 0 0 PEC12R.sym
 T 67600 45200 5 10 1 1 0 0 1
 device=PEC12R
 T 67600 45000 5 10 1 1 0 0 1
-refdes=S1
+refdes=S?
 T 66200 44800 5 10 0 0 0 0 1
 footprint=PEC12R
 }
@@ -348,7 +348,7 @@ C 46000 62700 1 90 1 A11JP.sym
 T 44800 62900 5 10 1 1 180 6 1
 device=A11JP
 T 45500 62900 5 10 1 1 180 6 1
-refdes=S2
+refdes=S?
 T 45500 63600 5 10 0 0 90 6 1
 footprint=A11JP
 }
@@ -360,7 +360,7 @@ C 44000 59100 1 90 0 diode-1.sym
 T 43400 59500 5 10 0 0 90 0 1
 device=DIODE
 T 44300 59700 5 10 1 1 180 0 1
-refdes=D6
+refdes=D?
 T 44000 59100 5 10 0 0 90 0 1
 footprint=diode
 }
@@ -375,7 +375,7 @@ C 42500 60600 1 270 0 resistor-1.sym
 T 42900 60300 5 10 0 0 270 0 1
 device=RESISTOR
 T 42400 60400 5 10 1 1 180 0 1
-refdes=R2
+refdes=R?
 T 42400 60200 5 10 1 1 180 0 1
 value=10k
 T 42500 60600 5 10 0 0 90 0 1
@@ -386,7 +386,7 @@ C 42500 61500 1 270 0 resistor-1.sym
 T 42900 61200 5 10 0 0 270 0 1
 device=RESISTOR
 T 42400 61300 5 10 1 1 180 0 1
-refdes=R3
+refdes=R?
 T 42400 61100 5 10 1 1 180 0 1
 value=10k
 T 42500 61500 5 10 0 0 90 0 1
@@ -397,7 +397,7 @@ C 66800 62100 1 270 0 resistor-1.sym
 T 67200 61800 5 10 0 0 270 0 1
 device=RESISTOR
 T 66700 61900 5 10 1 1 180 0 1
-refdes=R4
+refdes=R?
 T 66700 61700 5 10 1 1 180 0 1
 value=150
 T 66800 62100 5 10 0 0 90 0 1
@@ -408,7 +408,7 @@ C 65400 45500 1 270 0 resistor-1.sym
 T 65800 45200 5 10 0 0 270 0 1
 device=RESISTOR
 T 65300 45300 5 10 1 1 180 0 1
-refdes=R5
+refdes=R?
 T 65300 45100 5 10 1 1 180 0 1
 value=10k
 T 65400 45500 5 10 0 0 90 0 1
@@ -419,7 +419,7 @@ C 66100 45500 1 270 0 resistor-1.sym
 T 66500 45200 5 10 0 0 270 0 1
 device=RESISTOR
 T 66000 45300 5 10 1 1 180 0 1
-refdes=R6
+refdes=R?
 T 66000 45100 5 10 1 1 180 0 1
 value=10k
 T 66100 45500 5 10 0 0 90 0 1
@@ -430,7 +430,7 @@ C 69800 45500 1 270 0 resistor-1.sym
 T 70200 45200 5 10 0 0 270 0 1
 device=RESISTOR
 T 69700 45300 5 10 1 1 180 0 1
-refdes=R7
+refdes=R?
 T 69700 45100 5 10 1 1 180 0 1
 value=10k
 T 69800 45500 5 10 0 0 90 0 1
@@ -441,7 +441,7 @@ C 43800 43000 1 0 0 MPRLS0001PG.sym
 T 45400 45400 5 10 1 1 0 0 1
 device=MPRLS0001PG
 T 45400 45100 5 10 1 1 0 0 1
-refdes=U5
+refdes=U?
 T 42500 45300 5 10 0 0 0 0 1
 footprint=MPRLS0001PG
 }
@@ -454,7 +454,7 @@ C 61900 43800 1 0 0 800AWS.sym
 T 61900 45000 5 10 1 1 0 0 1
 device=800AWS
 T 62800 45000 5 10 1 1 0 0 1
-refdes=S3
+refdes=S?
 T 61000 44300 5 10 0 0 0 0 1
 footprint=800AWS
 }
@@ -475,7 +475,7 @@ C 63400 44000 1 270 0 resistor-1.sym
 T 63800 43700 5 10 0 0 270 0 1
 device=RESISTOR
 T 63300 43800 5 10 1 1 180 0 1
-refdes=R8
+refdes=R?
 T 63300 43600 5 10 1 1 180 0 1
 value=10k
 T 63400 44000 5 10 0 0 90 0 1
@@ -500,7 +500,7 @@ footprint=header1x4
 T 54700 39000 5 10 0 0 0 0 1
 device=header1x4
 T 57795 42995 5 10 1 1 0 0 1
-refdes=J3
+refdes=J?
 }
 C 57000 41700 1 0 0 gnd-1.sym
 N 57300 42100 57100 42100 4
@@ -520,3 +520,201 @@ netname=SWCLK
 }
 T 56800 41300 9 10 1 0 0 0 1
 Debug interface
+C 55000 61700 1 270 0 capacitor-1.sym
+{
+T 55700 61500 5 10 0 0 270 0 1
+device=CAPACITOR
+T 55900 61500 5 10 0 0 270 0 1
+symversion=0.1
+T 55000 61700 5 10 0 0 270 0 1
+footprint=sm_0603
+T 54800 61000 5 10 1 1 0 0 1
+refdes=C?
+T 54600 61400 5 10 1 1 0 0 1
+value=0.1uF
+}
+C 55000 61700 1 0 0 3.3V-plus-1.sym
+C 55100 60500 1 0 0 gnd-1.sym
+C 55800 61700 1 270 0 capacitor-1.sym
+{
+T 56500 61500 5 10 0 0 270 0 1
+device=CAPACITOR
+T 56700 61500 5 10 0 0 270 0 1
+symversion=0.1
+T 55800 61700 5 10 0 0 270 0 1
+footprint=sm_0603
+T 55600 61000 5 10 1 1 0 0 1
+refdes=C?
+T 55400 61400 5 10 1 1 0 0 1
+value=0.1uF
+}
+C 56500 61700 1 270 0 capacitor-1.sym
+{
+T 57200 61500 5 10 0 0 270 0 1
+device=CAPACITOR
+T 57400 61500 5 10 0 0 270 0 1
+symversion=0.1
+T 56500 61700 5 10 0 0 270 0 1
+footprint=sm_0603
+T 56300 61000 5 10 1 1 0 0 1
+refdes=C?
+T 56100 61400 5 10 1 1 0 0 1
+value=0.1uF
+}
+N 55200 61700 59500 61700 4
+N 55200 60800 59500 60800 4
+C 57200 61700 1 270 0 capacitor-1.sym
+{
+T 57900 61500 5 10 0 0 270 0 1
+device=CAPACITOR
+T 58100 61500 5 10 0 0 270 0 1
+symversion=0.1
+T 57200 61700 5 10 0 0 270 0 1
+footprint=sm_0603
+T 57000 61000 5 10 1 1 0 0 1
+refdes=C?
+T 56800 61400 5 10 1 1 0 0 1
+value=0.1uF
+}
+C 57900 61700 1 270 0 capacitor-1.sym
+{
+T 58600 61500 5 10 0 0 270 0 1
+device=CAPACITOR
+T 58800 61500 5 10 0 0 270 0 1
+symversion=0.1
+T 57900 61700 5 10 0 0 270 0 1
+footprint=sm_0603
+T 57700 61000 5 10 1 1 0 0 1
+refdes=C?
+T 57500 61400 5 10 1 1 0 0 1
+value=0.1uF
+}
+C 58600 61700 1 270 0 capacitor-1.sym
+{
+T 59300 61500 5 10 0 0 270 0 1
+device=CAPACITOR
+T 59500 61500 5 10 0 0 270 0 1
+symversion=0.1
+T 58600 61700 5 10 0 0 270 0 1
+footprint=sm_0603
+T 58400 61000 5 10 1 1 0 0 1
+refdes=C?
+T 58200 61400 5 10 1 1 0 0 1
+value=0.1uF
+}
+C 59300 61700 1 270 0 capacitor-1.sym
+{
+T 60000 61500 5 10 0 0 270 0 1
+device=CAPACITOR
+T 60200 61500 5 10 0 0 270 0 1
+symversion=0.1
+T 59300 61700 5 10 0 0 270 0 1
+footprint=sm_0603
+T 59100 61000 5 10 1 1 0 0 1
+refdes=C?
+T 58900 61400 5 10 1 1 0 0 1
+value=0.1uF
+}
+C 66300 49800 1 180 1 connector4-2.sym
+{
+T 67000 47700 5 10 1 1 180 0 1
+refdes=J?
+T 66600 47750 5 10 0 0 180 6 1
+device=CONNECTOR_4
+T 66600 47550 5 10 0 0 180 6 1
+footprint=CON4
+}
+C 64600 48600 1 0 0 3.3V-plus-1.sym
+C 66200 47900 1 0 0 gnd-1.sym
+N 66300 48600 64800 48600 4
+N 66300 49400 65300 49400 4
+{
+T 65400 49400 5 10 1 1 0 0 1
+netname=DISP_SDA
+}
+N 66300 49000 65300 49000 4
+{
+T 65400 49000 5 10 1 1 0 0 1
+netname=DISP_SCL
+}
+N 51600 54900 50800 54900 4
+{
+T 50800 54900 5 10 1 1 0 0 1
+netname=DISP_SDA
+}
+N 51600 54500 50800 54500 4
+{
+T 50800 54500 5 10 1 1 0 0 1
+netname=DISP_SCL
+}
+T 65100 47300 9 10 1 0 0 0 1
+Connector for OLED display
+C 63800 53600 1 0 0 gnd-1.sym
+C 65800 53800 1 90 0 capacitor-1.sym
+{
+T 65100 54000 5 10 0 0 90 0 1
+device=CAPACITOR
+T 64900 54000 5 10 0 0 90 0 1
+symversion=0.1
+T 65800 53800 5 10 0 0 90 0 1
+footprint=sm_0603
+T 65500 54100 5 10 1 1 180 0 1
+refdes=C7
+T 65000 53800 5 10 1 1 0 0 1
+value=0.1uF
+}
+C 65500 53500 1 0 0 gnd-1.sym
+C 63700 56000 1 0 0 3.3V-plus-1.sym
+N 63900 56000 63900 55900 4
+N 63900 56000 65600 56000 4
+N 65600 56000 65600 54700 4
+N 64700 54900 65600 54900 4
+C 63000 53900 1 0 0 osc.sym
+{
+T 64295 55700 5 10 1 1 0 0 1
+device=osc
+T 64295 56000 5 10 1 1 0 0 1
+refdes=U?
+T 62995 53895 5 10 0 1 0 0 1
+footprint=osc
+}
+T 62900 52900 9 10 1 0 0 0 3
+Optional oscillator, probably
+not necessary.
+Frequency TBD
+N 63000 54900 62300 54900 4
+{
+T 62300 54900 5 10 1 1 0 0 1
+netname=CLOCK
+}
+C 43600 47600 1 0 0 HIH8120.sym
+{
+T 44200 49100 5 10 1 1 0 0 1
+device=HIH8120
+T 44300 47600 5 10 1 1 0 0 1
+refdes=U?
+T 42100 48400 5 10 0 0 0 0 1
+footprint=HIH8120
+}
+C 43900 47300 1 0 0 gnd-1.sym
+C 43800 49300 1 0 0 3.3V-plus-1.sym
+N 44800 48500 46000 48500 4
+{
+T 44900 48500 5 10 1 1 0 0 1
+netname=HUMID_SCL
+}
+N 44800 48300 46000 48300 4
+{
+T 44900 48300 5 10 1 1 0 0 1
+netname=HUMID_SDA
+}
+N 48900 48900 50100 48900 4
+{
+T 49000 48900 5 10 1 1 0 0 1
+netname=HUMID_SCL
+}
+N 48900 48700 50100 48700 4
+{
+T 49000 48700 5 10 1 1 0 0 1
+netname=HUMID_SDA
+}
