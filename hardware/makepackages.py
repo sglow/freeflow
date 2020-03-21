@@ -156,5 +156,11 @@ p.Print( "packages/osc" );
 # Temperature / humidity sensor
 p = Header()
 p.Info( mfg='Honeywell', pnum='HIH8120-021-001', dk='480-5706-1-ND' )
-p.Create( N=4, pinW=mm(1.05), rows=1, pitch=mil(50), L=mm(4.9), W=m(2), exact=True )
+p.Create( N=4, pinW=mm(.65), rows=1, pitch=mil(50), L=mm(4.9), W=mm(2), exact=True )
 p.Print( 'packages/HIH8120' )
+
+# 4-pin Molex connector for serial port & power
+p = Header()
+p.Create( N=4, pinW=mm(1.09), rows=1, L=mm(12.7), W=mm(13.2), rowOff=mm(-13.2/2), exact=True );
+p.Info( mfg='Molex', pnum='0705530003', dk='WM4902-ND' );
+p.Print( "packages/molex_4" );
