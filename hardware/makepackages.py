@@ -3,11 +3,12 @@
 from Footprint import *;
 
 c=SM_Cap( "0603" );
+c.Info( pnum='150060RS75000', mfg='Wurth', dk='732-4978-1-ND', value='red' ); c.Print( 'packages/sm_0603' )
+c.Info( pnum='150060VS75000', mfg='Wurth', dk='732-4980-1-ND', value='green' ); c.Print( 'packages/sm_0603' )
 c.Print( 'packages/sm_0603' )
 
 c=SM_Cap( "0805" );
 c.Print( 'packages/sm_0805' )
-#c.Info( pnum='RC0603FR-0730KL', mfg='Yageo', dk='311-30.0KHRCT-ND', value='30k', ref='R1' ); c.Print( 'packages/sm_0603' )
 
 # 32-pin version of STM32
 p = Part()
@@ -95,8 +96,8 @@ p.pins.append( Pad( 1, hor=True, x=mm(-2.25), y=mm(-1.25-1.3/2), info=pi ))
 p.pins.append( Pad( 2, hor=True, x=mm(-2.25), y=mm(  .95+1.3/2), info=pi ))
 p.pins.append( Pad( 3, hor=True, x=mm( 2.25), y=mm(  .95+1.3/2), info=pi ))
 p.AddOutline( H=mm(5), W=mm(5), type="BOX" )
-p.Print( 'packages/buzzer' )
 # p.Info( pnum='CMT-0525-75-SMT-TR', mfg='CUI', dk='102-CMT-0525-75-SMT-CT-ND' );
+p.Print( 'packages/buzzer' )
 
 # Dual FET
 p = RectPart( 'Q1' )
