@@ -15,8 +15,11 @@ Note that I locally maintain my projects using Mercurial (hg) and am pushing to 
 using the hg-git plugin.  There may be some odd files in the repo (like .hgignore) due
 to that.  These can be ignored.
 
+The schematics and layout files here were made using the open source gEDA tools; gschem
+for schematic capture and pcb for layout.  These tools can be downloaded here:
+   http://www.geda-project.org/
+
 As of 3/22/20 this project is in the early stages.  A first cut of the PCB has been designed
 but no firmware has been started yet.  I'll try to keep this file updated as things progress.
 
 - Steve Glow
-  sglow@embeddedintelligence.com
