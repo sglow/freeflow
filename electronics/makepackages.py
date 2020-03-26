@@ -5,6 +5,11 @@ from Footprint import *;
 c=SM_Cap( "0603" );
 c.Info( pnum='150060RS75000', mfg='Wurth', dk='732-4978-1-ND', value='red' ); c.Print( 'packages/sm_0603' )
 c.Info( pnum='150060VS75000', mfg='Wurth', dk='732-4980-1-ND', value='green' ); c.Print( 'packages/sm_0603' )
+c.Info( pnum='RC0603FR-07150RL', mfg='Yageo', dk='311-150HRCT-ND', value='150' ); c.Print( 'packages/sm_0603' )
+c.Info( pnum='CC0603KRX7R9BB102', mfg='Yageo', dk='311-1080-1-ND', value='1nF' ); c.Print( 'packages/sm_0603' )
+c.Info( pnum='CC0603KPX7R9BB103', mfg='Yageo', dk='311-1572-1-ND', value='0.01uF' ); c.Print( 'packages/sm_0603' )
+c.Info( pnum='CL10A105KP8NNNC', mfg='Samsung', dk='1276-1182-1-ND', value='1uF' ); c.Print( 'packages/sm_0603' )
+c.Info( pnum='CC0603KRX7R8BB104', mfg='Yageo', dk='311-1341-1-ND', value='0.1uF' ); c.Print( 'packages/sm_0603' )
 c.Print( 'packages/sm_0603' )
 
 c=SM_Cap( "0805" );
@@ -88,7 +93,6 @@ p.AddOutline( H=mm(8.04), W=mm(5), type='BOX' )
 p.Info( pnum='DX4R005JJ2R1800', mfg='JAE', dk='670-2675-1-ND' );
 p.Print( 'packages/USB' );
 
-
 # buzzer
 p = Part();
 pi = PadInfo( pinW=mm(1.3), pinL=mm(1.5), exact=True )
@@ -96,7 +100,7 @@ p.pins.append( Pad( 1, hor=True, x=mm(-2.25), y=mm(-1.25-1.3/2), info=pi ))
 p.pins.append( Pad( 2, hor=True, x=mm(-2.25), y=mm(  .95+1.3/2), info=pi ))
 p.pins.append( Pad( 3, hor=True, x=mm( 2.25), y=mm(  .95+1.3/2), info=pi ))
 p.AddOutline( H=mm(5), W=mm(5), type="BOX" )
-# p.Info( pnum='CMT-0525-75-SMT-TR', mfg='CUI', dk='102-CMT-0525-75-SMT-CT-ND' );
+p.Info( pnum='CMT-0525-75-SMT-TR', mfg='CUI', dk='102-CMT-0525-75-SMT-CT-ND' );
 p.Print( 'packages/buzzer' )
 
 # Dual FET
