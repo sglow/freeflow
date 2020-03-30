@@ -2,22 +2,78 @@
 
 # Very simple command line interface for development
 
+import matplotlib;
+import matplotlib.pyplot as plt;
 import math;
 import cmd;
+import glob;
 import os;
 import serial
 import time
 import traceback
 
+plt.ion()
+
 OP_MODE    = 0
 OP_PEEK    = 1
 OP_POKE    = 2
+OP_GET     = 3
+OP_SET     = 4
 
 TERM = 0xf1
 ESC  = 0xf2
 
 ser = serial.Serial( port='/dev/ttyUSB0', baudrate=115200 )
 ser.timeout = 0.8
+
+fwname = 'boot.elf'
+
+varDict = {}
+
+class VarInfo:
+   def __init__( self, id, name, fmt, type ):
+      self.name = name;
+      self.id = id;
+      self.fmt = fmt;
+      self.type = type;
+      varDict[name] = self;
+
+   def GetSize( self ):
+      if( self.type == 'u16' ): return 2;
+      if( self.type == 'i16' ): return 2;
+      if( self.type == 'u32' ): return 4;
+      if( self.type == 'i32' ): return 4;
+      raise Error( "Unknown type" )
+
+   def IsSigned( self ):
+      return not (self.type[0] == 'u' )
+
+
+allVars = [
+   VarInfo( 0, "trace_ctrl",    '0x%04x', 'u16' ),
+   VarInfo( 1, "trace_period",  '%d',     'u16' ),
+   VarInfo( 2, "trace_samples", '%d',     'u16' ),
+   VarInfo( 3, "trace_var1",    '%d',     'u16' ),
+   VarInfo( 4, "trace_var2",    '%d',     'u16' ),
+   VarInfo( 5, "trace_var3",    '%d',     'u16' ),
+   VarInfo( 6, "trace_var4",    '%d',     'u16' ),
+   VarInfo( 7, "loop_freq",     '%d',     'u16' ),
+]
+
+# Names for trace variables.
+# These map to a list containing:
+#  ID, signed/unsigned info
+traceVars = [
+      ('none'               ),
+      ('dbgInt[0]',      's'),
+      ('dbgInt[1]',      's'),
+      ('dbgInt[2]',      's'),
+      ('dbgInt[3]',      's'),
+      ('diff_pressure',  'u'),
+      ('bat_volt',       'u'),
+      ('dpCal',          'u'),
+      ]
+
 
 class Error(Exception):
    def __init__(self, value):
@@ -70,7 +126,7 @@ class cmdline( cmd.Cmd ):
       if( len(param) > 3 ): fname = param[3];
       if( len(param) > 2 ): fmt = param[2];
       if( len(param) > 1 ): ct = int(param[1],0);
-      if( len(param) > 0 ): addr = int(param[0],0)
+      if( len(param) > 0 ): addr = param[0]
       peek( addr, ct, fmt, fname );
 
    def do_poke( self, line ):
@@ -83,15 +139,84 @@ class cmdline( cmd.Cmd ):
          ptype = param[0]
 	 param = param[1:];
 
-      addr = int(param[0],0)
+      addr = param[0]
       data = [int(x,0) for x in param[1:] ];
       poke( addr, data, ptype );
+
+   def do_get( self, line ):
+      param = str.split(line);
+      if( len(param) < 1 ):
+         print 'Usage: get <param>' 
+
+      if( not param[0] in varDict ):
+         print 'Unknow parameter'
+         return
+
+      val = GetVar( param[0] )
+
+      v = varDict[ param[0] ]
+      print v.fmt % val;
+
+   def complete_get( self, text, line, begidx, endidx ):
+      var = text;
+
+      out = [];
+      for i in varDict.keys():
+	 if( i.startswith( var ) ):
+	    out.append(i);
+
+      return out;
+
+   def complete_set( self, text, line, begidx, endidx ):
+      return self.complete_get( text, line, begidx, endidx )
+
+   def do_set( self, line ):
+      param = str.split(line);
+      if( len(param) < 2 ):
+         print 'Usage: set <param> <value>' 
+
+      if( not param[0] in varDict ):
+         print 'Unknow parameter'
+         return
+
+      try:
+         val = int( param[1], 0 )
+      except:
+         val = param[1]
+
+      SetVar( param[0], val )
 
    def do_EOF( self, line ):
       return True;
 
    def do_exit( self, line ):
       return True;
+
+   def do_trace( self, line ):
+
+      if( len(line) < 1 ): line = 'graph'
+
+      if not line in ['graph', 'download', 'mean' ]:
+         print 'Unknown trace command'
+         return
+
+      dat = GetTrace()
+
+      if( line == 'graph' ):
+         TraceGraph()
+
+      if( line == 'download' ):
+         fp = open( 'trace.dat', 'w' )
+         for j in range(len(dat[0])):
+            S = ''
+            for i in range(len(dat)):
+               S += '%5d ' % dat[i][j]
+            fp.write( S + '\n' )
+         fp.close()
+
+      if( line == 'mean' ):
+         for i in range(len(dat)):
+            print '%d: mean %.3f, medial: %.3f std: %.5f' % (i, mean(dat[i]), median(dat[i]), std(dat[i]))
 
 #   def do_reset( self, line ):
 #      SendCmd( OP_RESET )
@@ -136,12 +261,59 @@ def FmtPeek( dat, fmt='+XXXX', addr=0 ):
 
    return ret;
 
+elfFiles = {}
+def loadElf( fname ):
+   import elffile
+   global elfFiles
+
+   ct = os.stat( fname ).st_ctime
+
+   if( not fname in elfFiles ):
+      pass
+   elif( elfFiles[fname]['ctime'] != ct ):
+      pass
+   else:
+      return elfFiles[fname]['elf']
+
+   e = {}
+   e['ctime'] = ct
+   e['elf'] = elffile.ElfFile( fname )
+   elfFiles[fname] = e
+   return e['elf']
+
+def decodeAddr( addr, fw=None ):
+
+   global fwname
+   if( fw == None ):
+      fw = fwname
+
+   if( isinstance( addr, int ) ):
+      return addr
+
+   if( addr[0] == '&' ):
+      elf = loadElf( fw )
+
+      a = elf.getSymbol( addr[1:] )
+      if( a != None ): 
+         a = a.value;
+      return a
+   return int(addr,0)
+
 def peek( addr, ct=1, fmt='+XXXX', fname=None, raw=False  ):
-#   addr = decodeAddr(addr)
-#   if( addr == None ):
-#      print 'Unknown symbol'
-#      return
-   out = SendCmd( OP_PEEK, Split32( addr )+[ct] )
+   addr = decodeAddr(addr)
+   if( addr == None ):
+      print 'Unknown symbol'
+      return
+
+   out = []
+
+   while( ct ):
+      n = min( ct, 255 )
+      dat = SendCmd( OP_PEEK, Split32( addr )+[n] )
+      out += dat
+      ct -= len(dat)
+      addr += len(dat)
+
    if( raw ): return out
 
    s = FmtPeek( out, fmt, addr );
@@ -154,10 +326,10 @@ def peek( addr, ct=1, fmt='+XXXX', fname=None, raw=False  ):
       fp.close()
 
 def peekl( addr, ct=None, le=True, signed=False ):
-#   addr = decodeAddr(addr)
-#   if( addr == None ):
-#      print 'Unknown symbol'
-#      return
+   addr = decodeAddr(addr)
+   if( addr == None ):
+      print 'Unknown symbol'
+      return
 
    if( ct == None ):
       ct = 1;
@@ -174,10 +346,10 @@ def peekl( addr, ct=None, le=True, signed=False ):
 #   return ret
 
 def poke( addr, dat, ptype ):
-#   addr = decodeAddr(addr)
-#   if( addr == None ):
-#      print 'Unknown symbol'
-#      return
+   addr = decodeAddr(addr)
+   if( addr == None ):
+      print 'Unknown symbol'
+      return
    if( isinstance(dat,int) or isinstance(dat,long) ):
       dat = [dat];
 
@@ -187,6 +359,92 @@ def poke( addr, dat, ptype ):
       dat = Split16(dat);
 
    SendCmd( OP_POKE, Split32( addr )+dat )
+
+def GetVar( var ):
+   if( not var in varDict ):
+      return None;
+
+   v = varDict[ var ]
+   out = SendCmd( OP_GET, Split16( v.id ) )
+   return MakeInt( out, signed=v.IsSigned() )
+
+def SetVar( var, value ):
+   if( not var in varDict ):
+      return
+
+   v = varDict[ var ]
+
+   if( var[:9] == 'trace_var' ):
+      for i in range(len(traceVars)):
+         if( value == traceVars[i][0] ):
+            value = i
+            break
+
+   if( v.GetSize() == 2 ):
+      bval = Split16( value )
+   elif( v.GetSize() == 4 ):
+      bval = Split32( value );
+   else:
+      print "Sorry, can't handle this one"
+      return
+
+   SendCmd( OP_SET, Split16( v.id )+bval )
+
+def GetTrace():
+
+   # See if there's any data collected
+   n = GetVar( 'trace_samples' )
+   if( n < 1 ):
+      return None
+
+   # Find how many trace variables are in use
+   vct = 0;
+   signed = []
+   for i in range(4):
+      v = GetVar( 'trace_var%d' % (i+1) );
+      if( v ):
+         vct += 1;
+         signed.append( traceVars[v][1] )
+      else:
+         break;
+
+   if( vct < 1 ):
+      return None
+
+   # n should be a multiple of the number of 
+   # trace variables.  Just make sure that's the
+   # case
+   n -= n % vct;
+
+   # Read the trace data as one big array
+   dat = peek( 0x20008000, ct=n*2, raw=True )
+   dat = Build16( dat, le=True, signed=True )
+
+   ret = []
+   for i in range(vct):
+      ret.append( dat[i::vct] )
+      if( signed[i] == 'u' ):
+         for j in range(len(ret[i])):
+            if( ret[i][j] < 0 ): ret[i][j] += 65536
+
+   return ret
+
+def TraceGraph():
+   dat = GetTrace()
+   if( dat == None ):
+      return
+
+   freq = float(GetVar( 'loop_freq' ));
+   per = GetVar( 'trace_period' )
+   if( per < 1 ): per = 1;
+   M = per / float(freq)
+
+   time = [i*M for i in range(len(dat[0]))]
+   plt.figure()
+   for d in dat:
+      plt.plot( time, d );
+   plt.grid()
+   plt.show();
 
 def Cksum( buff ):
    s = 0x55
@@ -254,7 +512,8 @@ def SendCmd( op, data=[] ):
    if( len(rsp) < 1 ):
       return rsp
    if( Cksum(rsp) ):
-      raise Error( "Checksum" )
+      print 'Checksum error on response'
+      return []
 
    if( len(rsp)>0 and rsp[0] ):
       #raise Error( "Error %d (0x%02x)" % (rsp[0],rsp[0]) )
@@ -299,6 +558,12 @@ def Build32( dat, le=True, signed=False ):
       ret.append( MakeInt( dat[ (4*i):(4*i+4) ], signed=signed, le=le ) );
    return ret;
 
+def Build16( dat, le=True, signed=False ):
+   ret = [];
+   for i in range( len(dat)/2 ):
+      ret.append( MakeInt( dat[ (2*i):(2*i+2) ], signed=signed, le=le ) );
+   return ret;
+
 def GrabElems( dat, ct ):
    if( len(dat) < ct ):
       dat.extend( (ct-len(dat))*[0] );
@@ -317,6 +582,24 @@ def GrabU32( dat, le=True ): return MakeInt( GrabElems(dat,4), signed=False, le=
 def GrabI64( dat, le=True ): return MakeInt( GrabElems(dat,8), signed=True,  le=le );
 def GrabU64( dat, le=True ): return MakeInt( GrabElems(dat,8), signed=False, le=le );
 def GrabFlt( dat, le=True ): return I2F( GrabU32(dat, le=le) );
+
+def mean( dat ):
+   return float(sum(dat)) / len(dat)
+
+def median( dat ):
+   L = len(dat)
+   S = sorted(dat)
+   if( L & 1 ):
+      return S[ int(L/2) ]
+   return (S[ int(L/2)-1] + S[int(L/2)])/2
+
+def std( dat ):
+   m = mean(dat)
+
+   x = 0
+   for i in dat:
+      x += (i-m)**2
+   return math.sqrt( x/len(dat) )
 
 cmdline();
 

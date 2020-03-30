@@ -1,8 +1,14 @@
 /* main.c */
 
+#include "adc.h"
 #include "buzzer.h"
 #include "cpu.h"
+#include "encoder.h"
+#include "io.h"
+#include "loop.h"
 #include "sercmd.h"
+#include "timer.h"
+#include "trace.h"
 #include "uart.h"
 #include "utils.h"
 
@@ -18,6 +24,12 @@ int main( void )
    CPU_Init();
    UART_Init();
    BuzzerInit();
+   InitEncoder();
+   IntiIO();
+   TimerInit();
+   LoopInit();
+   AdcInit();
+   TraceInit();
 
 GPIO_PinMode( DIGIO_B_BASE, 0, GPIO_MODE_OUTPUT );
 GPIO_PinMode( DIGIO_B_BASE, 6, GPIO_MODE_OUTPUT );
@@ -29,5 +41,6 @@ GPIO_PinMode( DIGIO_B_BASE, 7, GPIO_MODE_OUTPUT );
    {
       PollSerCmd();
       BuzzerPoll();
+      PollIO();
    }
 }

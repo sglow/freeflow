@@ -41,9 +41,17 @@ void BuzzerInit( void )
 // Background polling task for buzzer
 void BuzzerPoll( void )
 {
-   TimerRegs *tmr = (TimerRegs *)TIMER1_BASE;
-   if( dbgInt[0] )
-      tmr->ccEnable = 1;
-   else
-      tmr->ccEnable = 0;
+//   TimerRegs *tmr = (TimerRegs *)TIMER1_BASE;
+//
+//   if( dbgInt[0] )
+//   {
+//      tmr->ccEnable = 1;
+//      if( dbgInt[0] != dbgInt[1] )
+//      {
+//         tmr->reload = CLOCK_RATE/dbgInt[0];
+//         tmr->compare[0] = tmr->reload/2;
+//      }
+//   }
+//   else
+//      tmr->ccEnable = 0;
 }

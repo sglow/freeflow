@@ -4,8 +4,7 @@
 #include "errors.h"
 #include "string.h"
 #include "utils.h"
-
-#define MIN_BUFFER_LEN    32
+#include "vars.h"
 
 // Binary command handler
 //
@@ -24,12 +23,11 @@
 
 // local functions
 static uint8_t Cksum( uint8_t *cmd, int len );
-static int AddCksum( uint8_t *cmd, int len );
-static int ReturnErr( uint8_t *cmd, int err );
 static int HandlePeek( uint8_t *cmd, int len, int max );
 static int HandlePoke( uint8_t *cmd, int len, int max );
 
-
+// Process a binary serial command.
+// Returns the length of the response.
 int ProcessBinaryCmd( uint8_t *cmd, int len, int max )
 {
    // To keep error checking simpler here, we require a minimum 
@@ -65,6 +63,12 @@ int ProcessBinaryCmd( uint8_t *cmd, int len, int max )
          case CMD_POKE:
             return HandlePoke( cmd, len, max );
 
+         case CMD_GET:
+            return HandleVarGet( cmd, len, max );
+
+         case CMD_SET:
+            return HandleVarSet( cmd, len, max );
+
          default:
             err = ERR_BAD_CMD;
             break;
@@ -87,14 +91,14 @@ static uint8_t Cksum( uint8_t *cmd, int len )
 
 // Add the error code and checksum for a command with len data bytes
 // Returns the total command length (len+2)
-static int AddCksum( uint8_t *cmd, int len )
+int AddCksum( uint8_t *cmd, int len )
 {
    cmd[0] = ERR_OK;
    cmd[1] = Cksum( &cmd[2], len ) ^ 0x55;
    return len+2;
 }
 
-static int ReturnErr( uint8_t *cmd, int err )
+int ReturnErr( uint8_t *cmd, int err )
 {
    cmd[0] = err;
    cmd[1] = err ^ 0x55;
