@@ -3,3 +3,4 @@ electronics/output
 firmware/obj
 firmware/.*\.elf
 firmware/.*\.map
+Sensirion/.*

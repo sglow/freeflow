@@ -1,0 +1,29 @@
+Some general notes.  This is just a place for me to keep track of interesting
+info on the web.
+
+Interesting page on Wikipedia:
+   https://en.wikipedia.org/wiki/Spirometry
+
+Helpful page on USB virtual serial port:
+   http://janaxelson.com/usb_virtual_com_port.htm
+
+The linear motor is set up for 1000 cts/in
+
+From RMVS challenge document:
+- Must deliver at least 400ml of air in 1.5 sec
+  Minimum flow rate is then 267 ml/sec
+
+  Googling around a bit suggests that most ventilators 
+  have a maximum flow rate of 60 to 120 L/min.
+  That would be 1000 to 2000 ml/sec
+
+  I found a calculator to calculate TV based on patient size.
+  https://www.mdcalc.com/endotracheal-tube-ett-depth-tidal-volume-calculator
+
+  It gives two values, 6mL/Kg and 8mL/Kg
+
+  6' male: 468 - 624mL
+  5' male: 300 - 400
+  5' female: 276 - 368
+  4' female: same as 5'
+
