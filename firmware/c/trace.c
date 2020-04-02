@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include "adc.h"
 #include "errors.h"
+#include "pressure.h"
+#include "timer.h"
 #include "trace.h"
 #include "utils.h"
 #include "vars.h"
@@ -17,9 +19,9 @@
 //
 // trace_ctrl - 16-bit control/status register.  It's bitmapped as follows:
 //   xxxxxxxxxxxxxxxx
-//   ...............\------ Set if the trace is currently running.  Automatically cleared
-//   ...............        when the trace buffer fills up.
-//   \\\\\\\\\\\\\\\------- Reserved.  Should be left 0
+//   ...............\------ Set if the trace is currently running.  Clears when the trace fills up
+//   ..............\------- Set to put the trace buffer in a special debug mode.  See below
+//   \\\\\\\\\\\\\\-------- Reserved.  Should be left 0
 //
 // trace_period - 16-bit unsigned value which gives the period of data samples in units of loop cycles
 //
@@ -35,7 +37,8 @@
 
 // Control bits
 #define CTRL_RUNNING        0x0001
-#define CTRL_RESERVED       0xFFFE
+#define CTRL_DEBUG_TRACE    0x0002
+#define CTRL_RESERVED       0xFFFC
 
 // local functions
 static uint16_t GetDbg0( void ){ return dbgUInt[0]; }
@@ -54,6 +57,7 @@ static uint16_t period;
 static uint16_t samples;
 static uint16_t pct;
 static uint16_t ctrl;
+static uint16_t dbgTraceTime;
 static VarInfo varCtrl, varPeriod, varSamples;
 static VarInfo varTraceVar[4];
 
@@ -71,7 +75,9 @@ static traceFunc traceVarFunc[] =
    GetDbg3,                 // 4 dbgInt[3]   locations and they can be sampled in real time.
    GetDiffPressure,         // 5 Differential pressure reading
    GetBatVolt,              // 6 Battery voltage
-   GetDPcal,
+   GetDPcal,                // 7 Calibrated differential pressure
+   GetPressure1,            // 8 Gauge pressure sensor 1
+   GetPressure2,            // 9 Gauge pressure sensor 2
 };
 
 
@@ -104,7 +110,7 @@ void SaveTrace( void )
 
    pct = 0;
 
-   int16_t *traceData = (int16_t *)TRACE_DATA_ADDR;
+   uint16_t *traceData = (uint16_t *)TRACE_DATA_ADDR;
 
    // Save our trace variables to the buffer
    for( int i=0; i<4; i++ )
@@ -115,7 +121,7 @@ void SaveTrace( void )
 
       // At this point, the variable ID values should have been vetted so I assume they're 
       // all valid.  Call the function to get the value to save
-      int16_t value = traceVarFunc[ varID[i] ]();
+      uint16_t value = traceVarFunc[ varID[i] ]();
 
       // Save this to my trace data array
       traceData[ samples++ ] = value;
@@ -143,6 +149,19 @@ static int SetCtrl( VarInfo *info, uint8_t *buff, int len )
    if( tmp & CTRL_RESERVED )
       return ERR_RANGE;
 
+   // We support a special debug mode in which the trace buffer 
+   // is used to store debug info in real time rather then being
+   // sampled normally.  Setting this control bit resets the trace
+   // and puts it in this mode.  If this bit is set, the RUNNING
+   // bit is automatically cleared
+   if( tmp & CTRL_DEBUG_TRACE )
+   {
+      ctrl = CTRL_DEBUG_TRACE;
+      samples = 0;
+      dbgTraceTime = TimerGetUsec();
+      return 0;
+   }
+
    // If the trace is being started, reset the 
    // sample and period counters
    if( !(ctrl & CTRL_RUNNING) && (tmp & CTRL_RUNNING) )
@@ -154,4 +173,35 @@ static int SetCtrl( VarInfo *info, uint8_t *buff, int len )
    ctrl = tmp;
    return 0;
 }
+
+// When this is called, 4 16-bit values will be written to the trace buffer.
+// The first is the change in time (in usec) since this was previously called
+// The other three are the values passed in here
+void DbgTrace( uint16_t a, uint16_t b, uint16_t c )
+{
+   if( !(ctrl & CTRL_DEBUG_TRACE) )
+      return;
+
+   uint16_t *traceData = (uint16_t *)TRACE_DATA_ADDR;
+   uint16_t now = TimerGetUsec();
+
+   traceData[ samples++ ] = now - dbgTraceTime;
+   traceData[ samples++ ] = a;
+   traceData[ samples++ ] = b;
+   traceData[ samples++ ] = c;
+
+   dbgTraceTime = now;
+
+   if( samples >= TRACE_DATA_LEN/(4*sizeof(uint16_t)) )
+   {
+      ctrl = 0;
+      return;
+   }
+}
+
+void DbgTraceL( uint16_t a, uint32_t b )
+{
+   DbgTrace( a, b>>16, b );
+}
+
 

@@ -3,9 +3,11 @@
 #include "adc.h"
 #include "buzzer.h"
 #include "cpu.h"
+#include "display.h"
 #include "encoder.h"
 #include "io.h"
 #include "loop.h"
+#include "pressure.h"
 #include "sercmd.h"
 #include "timer.h"
 #include "trace.h"
@@ -30,10 +32,8 @@ int main( void )
    LoopInit();
    AdcInit();
    TraceInit();
-
-GPIO_PinMode( DIGIO_B_BASE, 0, GPIO_MODE_OUTPUT );
-GPIO_PinMode( DIGIO_B_BASE, 6, GPIO_MODE_OUTPUT );
-GPIO_PinMode( DIGIO_B_BASE, 7, GPIO_MODE_OUTPUT );
+   InitPressure();
+   InitDisplay();
 
    // The main loop handles lower priority background tasks
    // The higher priority work is done in interrupt handlers.
@@ -42,5 +42,6 @@ GPIO_PinMode( DIGIO_B_BASE, 7, GPIO_MODE_OUTPUT );
       PollSerCmd();
       BuzzerPoll();
       PollIO();
+      PollDisplay();
    }
 }

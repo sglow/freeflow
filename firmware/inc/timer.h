@@ -9,16 +9,22 @@
 // prototypes
 void TimerInit( void );
 
-static inline uint32_t TimerGetUsec( void )
+static inline uint16_t TimerGetUsec( void )
 {
    TimerRegs *tmr = (TimerRegs *)TIMER16_BASE;
    return tmr->counter;
 }
 
-static inline uint32_t UsecSince( uint16_t when )
+static inline uint16_t UsecSince( uint16_t when )
 {
    TimerRegs *tmr = (TimerRegs *)TIMER16_BASE;
    return tmr->counter - when;
+}
+
+static inline void BusyWait( uint8_t usec )
+{
+   uint16_t start = TimerGetUsec();
+   while( UsecSince( start ) < usec ){}
 }
 
 #endif

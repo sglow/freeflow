@@ -3,6 +3,7 @@
 #include "adc.h"
 #include "cpu.h"
 #include "loop.h"
+#include "pressure.h"
 #include "trace.h"
 #include "utils.h"
 #include "vars.h"
@@ -61,6 +62,8 @@ void LoopISR( void )
    loopCt++;
 
    AdcRead();
+   PollPressure();
+
    SaveTrace();
 
 GPIO_TglPin( DIGIO_B_BASE, 6 );

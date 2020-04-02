@@ -72,6 +72,8 @@ traceVars = [
       ('diff_pressure',  'u'),
       ('bat_volt',       'u'),
       ('dpCal',          'u'),
+      ('pres1',          'u'),
+      ('pres2',          'u'),
       ]
 
 

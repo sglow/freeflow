@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "cpu.h"
 #include "loop.h"
+#include "pressure.h"
 #include "uart.h"
 
 // global data
@@ -40,8 +41,8 @@ void CPU_Init( void )
    // Enable clocks to peripherials I use
    rcc->periphClkEna[0] = 0x00000100;  // Flash
    rcc->periphClkEna[1] = 0x00002007;  // GPIO, ADC
-   rcc->periphClkEna[4] = 0x40000001;  // Opamp, Timer 2
-   rcc->periphClkEna[6] = 0x00034800;  // UART1, Timers 1, 15, 16
+   rcc->periphClkEna[4] = 0x40200001;  // Opamp, Timer 2, I2C1
+   rcc->periphClkEna[6] = 0x00035800;  // UART1, Timers 1, 15, 16, SPI1
 
    // Fin = 4MHz
    // Fvco = Fin * (N/M)
@@ -52,14 +53,20 @@ void CPU_Init( void )
    int M = 1;
    rcc->pllCfg = 0x01000001 | (N<<8) | ((M-1)<<4);
 
-   // Turn on the PLL
-   rcc->clkCtrl |= 0x01000000;
+   // Turn on the PLL and HSI16
+   rcc->clkCtrl |= 0x01000100;
 
    // Wait for PLL ready
    while( !(rcc->clkCtrl & 0x02000000) ){}
 
    // Set PLL as system clock
    rcc->clkCfg = 0x00000003;
+
+   // Route the HSI16 clock to I2C1.
+   // Mostly because I'm too lazy to figure out the complex timing
+   // register settings for the i2c peripherial for a clock frequency
+   // that's not given as an example in the reference manual!
+   rcc->indClkCfg = 0x00002000;
 }
 
 // Enable an interrupt with a specified priority (0 to 15)
@@ -144,7 +151,7 @@ void (* const vectors[])(void) =
    BadISR,                                 //  48 - 0x0C0 
    BadISR,                                 //  49 - 0x0C4 
    BadISR,                                 //  50 - 0x0C8 
-   BadISR,                                 //  51 - 0x0CC 
+   SPI1_ISR,                               //  51 - 0x0CC - SPI1
    BadISR,                                 //  52 - 0x0D0 
    UART_ISR,                               //  53 - 0x0D4 
    BadISR,                                 //  54 - 0x0D8 

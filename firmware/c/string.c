@@ -92,21 +92,21 @@ int strncmp( const char *s1, const char *s2, int n )
    return 0;
 }
 
-int strncasecmp( const char *s1, const char *s2, int n )
-{
-   for( int i=0; i<n; i++ )
-   {
-      int diff = toupper(s1[i]) - toupper(s2[i]);
-      if( diff ) return diff;
-      if( !s1[i] ) break;
-   }
-   return 0;
-}
-
-int strcasecmp( const char *s1, const char *s2 )
-{
-   return strncasecmp( s1, s2, 0x7fffffff );
-}
+//int strncasecmp( const char *s1, const char *s2, int n )
+//{
+//   for( int i=0; i<n; i++ )
+//   {
+//      int diff = toupper(s1[i]) - toupper(s2[i]);
+//      if( diff ) return diff;
+//      if( !s1[i] ) break;
+//   }
+//   return 0;
+//}
+//
+//int strcasecmp( const char *s1, const char *s2 )
+//{
+//   return strncasecmp( s1, s2, 0x7fffffff );
+//}
 
 char *ltrim( char *str )
 {

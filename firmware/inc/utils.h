@@ -61,8 +61,4 @@ static inline void u32_2_u8( uint16_t val, uint8_t ret[] )
 #define dbgU8       ((uint8_t*)0x20000000)
 #define dbgI8       ((int8_t*)0x20000000)
 
-//void DbgTraceReset( void );
-//void DbgTrace( uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e );
-//void fastcode DbgTraceF( uint32_t a, float b, float c, float d, float e );
-
 #endif

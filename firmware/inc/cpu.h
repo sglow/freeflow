@@ -14,6 +14,7 @@
 // in the section on the NVIC (12)
 #define INT_VECT_TMR15     0xA0/4
 #define INT_VECT_TMR16     0xA4/4
+#define INT_VECT_SPI1      0xCC/4
 #define INT_VECT_UART1     0xD4/4
 
 typedef volatile uint64_t LREG;
@@ -224,11 +225,32 @@ typedef struct
 #define SPI1_BASE                  0x40013000
 #define SPI2_BASE                  0x40003800
 #define SPI3_BASE                  0x40003C00
+typedef struct
+{
+   REG ctrl[2];
+   REG status;
+   REG data;
+   REG crcPoly;
+   REG rxCRC;
+   REG txCRC;
+} SPI_Regs;
 
 #define I2C1_BASE                  0x40005400
 #define I2C2_BASE                  0x40005800
 #define I2C3_BASE                  0x40005c00
 #define I2C4_BASE                  0x40008400
+typedef struct
+{
+   REG ctrl[2];
+   REG addr[2];
+   REG timing;
+   REG timeout;
+   REG status;
+   REG intClr;
+   REG pec;
+   REG rxData;
+   REG txData;
+} I2C_Regs;
 
 #define USBFS_BASE                 0x40006800
 

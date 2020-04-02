@@ -110,6 +110,7 @@ p.Info( pnum='DMN63D8LDW-7', mfg='Diodes Inc', dk='DMN63D8LDW-7CT-ND' )
 p.Print( 'packages/dual_fet' )
 
 # Gage pressure sensor.  Note that pins are numbered backward from normal
+exit( "ERROR ERROR! Pin 1 dot is in wrong location!  Fix that!" )
 p = Part();
 p.InitFourSided( N=12, W=mm(5), L=mm(5), pitch=mm(1.27), pinW=mm(0.7), pinL=mm(0.65), rowD=mm(4.2), exact=True )
 for i in p.pins: 
