@@ -12,6 +12,7 @@ void TimerInit( void )
    TimerRegs *tmr = (TimerRegs *)TIMER16_BASE;
    tmr->reload = 0xffff;
    tmr->prescale = (CLOCK_RATE_MHZ-1);
+   tmr->event = 1;
    tmr->ctrl[0] = 1;
 }
 

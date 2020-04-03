@@ -12,10 +12,12 @@
 // vector table divided by 4
 // The interrupt vector table can be found in the reference manual 
 // in the section on the NVIC (12)
+#define INT_VECT_DMA1_6    0x80/4
 #define INT_VECT_TMR15     0xA0/4
 #define INT_VECT_TMR16     0xA4/4
 #define INT_VECT_SPI1      0xCC/4
 #define INT_VECT_UART1     0xD4/4
+#define INT_VECT_I2C1      0xBC/4
 
 typedef volatile uint64_t LREG;
 typedef volatile uint32_t REG;
@@ -221,6 +223,21 @@ typedef struct
 
 #define DMA1_BASE                  0x40020000
 #define DMA2_BASE                  0x40020400
+typedef struct
+{
+   REG intStat;
+   REG intClr;
+   struct
+   {
+      REG config;
+      REG count;
+      REG pAddr;
+      REG mAddr;
+      REG rsvd;
+   } channel[7];
+   REG rsvd[5];
+   REG chanSel;
+} DMA_Reg;
 
 #define SPI1_BASE                  0x40013000
 #define SPI2_BASE                  0x40003800

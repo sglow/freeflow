@@ -156,9 +156,7 @@ static int SetCtrl( VarInfo *info, uint8_t *buff, int len )
    // bit is automatically cleared
    if( tmp & CTRL_DEBUG_TRACE )
    {
-      ctrl = CTRL_DEBUG_TRACE;
-      samples = 0;
-      dbgTraceTime = TimerGetUsec();
+      DbgTraceEnable();
       return 0;
    }
 
@@ -172,6 +170,13 @@ static int SetCtrl( VarInfo *info, uint8_t *buff, int len )
 
    ctrl = tmp;
    return 0;
+}
+
+void DbgTraceEnable( void )
+{
+   ctrl = CTRL_DEBUG_TRACE;
+   samples = 0;
+   dbgTraceTime = TimerGetUsec();
 }
 
 // When this is called, 4 16-bit values will be written to the trace buffer.

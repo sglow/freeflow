@@ -8,6 +8,7 @@
 
 // prototypes
 void LoopInit( void );
+void LoopStart( void );
 void LoopISR( void );
 uint32_t GetLoopCt( void );
 

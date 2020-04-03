@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include "cpu.h"
+#include "display.h"
 #include "loop.h"
 #include "pressure.h"
 #include "uart.h"
@@ -39,7 +40,7 @@ void CPU_Init( void )
    flash->access = 0x00000604;
 
    // Enable clocks to peripherials I use
-   rcc->periphClkEna[0] = 0x00000100;  // Flash
+   rcc->periphClkEna[0] = 0x00000101;  // Flash, DMA1
    rcc->periphClkEna[1] = 0x00002007;  // GPIO, ADC
    rcc->periphClkEna[4] = 0x40200001;  // Opamp, Timer 2, I2C1
    rcc->periphClkEna[6] = 0x00035800;  // UART1, Timers 1, 15, 16, SPI1
@@ -67,6 +68,8 @@ void CPU_Init( void )
    // register settings for the i2c peripherial for a clock frequency
    // that's not given as an example in the reference manual!
    rcc->indClkCfg = 0x00002000;
+
+IntEnable();
 }
 
 // Enable an interrupt with a specified priority (0 to 15)
@@ -132,7 +135,7 @@ void (* const vectors[])(void) =
    BadISR,                                 //  29 - 0x074 
    BadISR,                                 //  30 - 0x078 
    BadISR,                                 //  31 - 0x07C 
-   BadISR,                                 //  32 - 0x080 
+   DispISR,                                //  32 - 0x080 
    BadISR,                                 //  33 - 0x084 
    BadISR,                                 //  34 - 0x088 
    BadISR,                                 //  35 - 0x08C 
@@ -147,7 +150,7 @@ void (* const vectors[])(void) =
    BadISR,                                 //  44 - 0x0B0 
    BadISR,                                 //  45 - 0x0B4 
    BadISR,                                 //  46 - 0x0B8 
-   BadISR,                                 //  47 - 0x0BC 
+   DispISR,                                //  47 - 0x0BC 
    BadISR,                                 //  48 - 0x0C0 
    BadISR,                                 //  49 - 0x0C4 
    BadISR,                                 //  50 - 0x0C8 

@@ -38,14 +38,21 @@ void LoopInit( void )
 
    tmr->reload   = usPerLoop-1;
    tmr->prescale = (CLOCK_RATE_MHZ-1);
-   tmr->intEna   = 0x00000001;
-   tmr->ctrl[0]  = 1;
+   tmr->event    = 1;
 
    // Enable the interrupt with priority 15 (lowest priority interrupt)
    EnableInterrupt( INT_VECT_TMR15, 15 );
 
    loopFreq = LOOP_FREQ;
    VarInit( &varLoopFreq, VARID_LOOP_FREQ, "loop_freq", VAR_TYPE_INT16, &loopFreq, VAR_FLG_READONLY );
+}
+
+void LoopStart( void )
+{
+   TimerRegs *tmr = (TimerRegs *)TIMER15_BASE;
+   tmr->status   = 0;
+   tmr->intEna   = 0x00000001;
+   tmr->ctrl[0]  = 1;
 }
 
 uint32_t GetLoopCt( void )
@@ -65,6 +72,4 @@ void LoopISR( void )
    PollPressure();
 
    SaveTrace();
-
-GPIO_TglPin( DIGIO_B_BASE, 6 );
 }

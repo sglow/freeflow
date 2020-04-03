@@ -24,6 +24,7 @@ int main( void )
 
    // Init the processor and various modules
    CPU_Init();
+GPIO_Output( DIGIO_A_BASE, 7, 0 );
    UART_Init();
    BuzzerInit();
    InitEncoder();
@@ -34,6 +35,8 @@ int main( void )
    TraceInit();
    InitPressure();
    InitDisplay();
+
+   LoopStart();
 
    // The main loop handles lower priority background tasks
    // The higher priority work is done in interrupt handlers.

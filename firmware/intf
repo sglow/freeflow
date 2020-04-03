@@ -309,12 +309,14 @@ def peek( addr, ct=1, fmt='+XXXX', fname=None, raw=False  ):
 
    out = []
 
+   A = addr;
+
    while( ct ):
       n = min( ct, 255 )
-      dat = SendCmd( OP_PEEK, Split32( addr )+[n] )
+      dat = SendCmd( OP_PEEK, Split32( A )+[n] )
       out += dat
       ct -= len(dat)
-      addr += len(dat)
+      A += len(dat)
 
    if( raw ): return out
 
@@ -327,7 +329,18 @@ def peek( addr, ct=1, fmt='+XXXX', fname=None, raw=False  ):
       fp.write('\n');
       fp.close()
 
-def peekl( addr, ct=None, le=True, signed=False ):
+def peek16( addr, ct=None, le=True, signed=False ):
+   addr = decodeAddr(addr)
+   if( addr == None ):
+      print 'Unknown symbol'
+      return
+
+   if( ct == None ):
+      ct = 1;
+   out = peek( addr, 2*ct, raw=True )
+   return Build16( out, le=True, signed=False )
+
+def peek32( addr, ct=None, le=True, signed=False ):
    addr = decodeAddr(addr)
    if( addr == None ):
       print 'Unknown symbol'

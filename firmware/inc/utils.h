@@ -41,7 +41,7 @@ static inline void u16_2_u8( uint16_t val, uint8_t ret[] )
    ret[1] = val>>8;
 }
 
-static inline void u32_2_u8( uint16_t val, uint8_t ret[] )
+static inline void u32_2_u8( uint32_t val, uint8_t ret[] )
 {
    ret[0] = val;
    ret[1] = val>>8;

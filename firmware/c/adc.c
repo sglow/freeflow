@@ -3,6 +3,7 @@
 #include "adc.h"
 #include "cpu.h"
 #include "timer.h"
+#include "trace.h"
 #include "utils.h"
 #include "vars.h"
 
@@ -40,8 +41,7 @@ void AdcInit( void )
    // The time in the datasheet is 20 microseconds, but
    // I'll wait for 30 just to be extra conservative
    // (Hey, it's only 10 more microseconds!)
-   uint32_t start = TimerGetUsec();
-   while( UsecSince( start ) < 30 ){}
+   BusyWait( 30 );
 
    // Calibrate the A/D for single ended channels
    adc->adc[0].ctrl |= 0x80000000;

@@ -28,6 +28,6 @@ typedef struct
 // prototypes
 void InitDisplay();
 void PollDisplay();
-void DrawChar( uint8_t ch, int x, int y, const FontInfo *fptr );
+void DispISR( void );
 
 #endif

@@ -126,8 +126,30 @@ static int HandlePeek( uint8_t *cmd, int len, int max )
    if( ct > max-2 )
       ct = max-2;
 
-   // Copy data to my buffer
-   memcpy( &cmd[2], (const void *)addr, ct );
+   // Some registers can't handle byte accesses, so rather then just
+   // use a simple memcpy here I will do 32-bit or 16-bit accesses 
+   // as long as both the address and count are aligned to 32 or 16 bits.
+   if( !(addr&3) && !(ct&3) )
+   {
+      uint32_t *ptr = (uint32_t *)addr;
+
+      for( int i=0; i<ct/4; i++ )
+      {
+         uint32_t x = *ptr++;
+         u32_2_u8( x, &cmd[2+4*i] );
+      }
+   }
+   else if( !(addr&1) && !(ct&1) )
+   {
+      uint16_t *ptr = (uint16_t *)addr;
+      for( int i=0; i<ct/2; i++ )
+      {
+         uint16_t x = *ptr++;
+         u16_2_u8( x, &cmd[2+2*i] );
+      }
+   }
+   else
+      memcpy( &cmd[2], (const void *)addr, ct );
    
    return AddCksum( cmd, ct );
 }
@@ -144,6 +166,14 @@ static int HandlePoke( uint8_t *cmd, int len, int max )
       return ReturnErr( cmd, ERR_MISSING_DATA );
 
    uint32_t addr = b2u32( &cmd[2] );
+
+   if( addr == 0x12345678 )
+   {
+      uint32_t *ptr = (uint32_t*)0x40020000;
+      dbgLong[2] = *ptr++;
+      dbgLong[3] = *ptr++;
+      return ReturnErr( cmd, ERR_OK );
+   }
 
    // If the address is less then 0x80, then I add the offset to the
    // start of RAM.  This is just for convenience since I reserve the 
