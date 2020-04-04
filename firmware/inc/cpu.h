@@ -337,6 +337,25 @@ static inline void GPIO_Output( uint32_t bank, int pin, int state )
    GPIO_OutType( bank, pin, GPIO_OUTTYPE_PUSHPULL );
 }
 
+static inline void GPIO_PullUp( uint32_t bank, int pin )
+{
+   GPIO_Regs *gpio = (GPIO_Regs *)bank;
+
+   uint32_t x = gpio->pullUpDn & ~(3<<(2*pin));
+   x |= 1 << (2*pin);
+   gpio->pullUpDn = x;
+}
+
+static inline void GPIO_PullDn( uint32_t bank, int pin )
+{
+   GPIO_Regs *gpio = (GPIO_Regs *)bank;
+
+   uint32_t x = gpio->pullUpDn & ~(3<<(2*pin));
+   x |= 2 << (2*pin);
+   gpio->pullUpDn = x;
+}
+
+
 static inline void IntDisable( void )
 {
    asm volatile( "cpsid i" );

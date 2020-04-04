@@ -2,7 +2,9 @@
 
 #include "cpu.h"
 #include "display.h"
-#include "font_sans9p.h"
+#include "myfont.h"
+#include "loop.h"
+#include "sprintf.h"
 #include "string.h"
 #include "timer.h"
 #include "trace.h"
@@ -26,16 +28,18 @@
 #define STATE_DOING_INIT     3     // Doing one time init at startup
 
 // local functions
+static int DrawString( const char *str, int x, int y, const FontInfo *font );
 static int DrawChar( uint8_t ch, int x, int y, const FontInfo *font );
 static int SetupDisplay( void );
 static void StartDmaWrite( const uint8_t *buff, uint8_t len );
-static void SetPageAddr( uint8_t page, uint8_t col );
+static int SetPageAddr( uint8_t page );
 static void SendPage( uint8_t page );
 
 // local data
 static uint8_t dirtyPages;
 static uint8_t dmaPage;
 static volatile uint8_t dispState;
+static uint32_t lastDispUpdt;
 
 // The display buffer is a local copy of the RAM stored in the display itself.
 // I write to this buffer then use DMA to send it (via i2c) to the display.
@@ -55,6 +59,15 @@ void InitDisplay()
    // display.  These can be routed to i2c1
    GPIO_PinAltFunc( DIGIO_B_BASE, 6, 4 );
    GPIO_PinAltFunc( DIGIO_B_BASE, 7, 4 );
+
+   // NOTE - it's not well documented in the STM32 manual,
+   //        but for i2c you need to configure the I/O as 
+   //        open drain, outputs.  The i2c module doesn't 
+   //        do that for you automatically.
+   GPIO_PullUp( DIGIO_B_BASE, 6 );
+   GPIO_PullUp( DIGIO_B_BASE, 7 );
+   GPIO_OutType( DIGIO_B_BASE, 6, GPIO_OUTTYPE_OPENDRIAN );
+   GPIO_OutType( DIGIO_B_BASE, 7, GPIO_OUTTYPE_OPENDRIAN );
 
    I2C_Regs *i2c = (I2C_Regs *)I2C1_BASE;
 
@@ -86,33 +99,36 @@ void InitDisplay()
 
 void UpdtDisplay( void )
 {
-   dirtyPages = 0xFF;
-   SetPageAddr( 0, 0 );
+   dmaPage = SetPageAddr( 0 );
 }
 
 // Called from background task
 void PollDisplay()
 {
-   if( !dbgU8[0] )
+   if( LoopsSince( lastDispUpdt ) < MsToLoop( 50 ) )
       return;
 
-   if( dbgU8[0] == 0xff )
-   {
-      SetupDisplay();
-      dbgU8[0] = 0;
-      return;
-   }
+   lastDispUpdt = GetLoopCt();
 
-   memset( dispBuff, 0, sizeof(dispBuff) );
+   memset( dispBuff, 0, sizeof(dispBuff));
 
-   for( int i=0, x=0; i<dbgU8[0]; i++ )
-   {
-      uint8_t ch = dbgU8[1]+i;
-      x += DrawChar( ch, x, i+20, &sans9p );
-   }
+   char buff[80];
+   sprintf( buff, "Test: %6d", GetLoopCt() );
 
+   DrawString( buff, dbgU8[0], dbgU8[1], &myfont );
+
+//   dirtyPages = 0xff;
    UpdtDisplay();
-   dbgU8[0] = 0;
+}
+
+static int DrawString( const char *str, int x, int y, const FontInfo *font )
+{
+   int xx = x;
+
+   for( ; *str; str++ )
+      xx += DrawChar( (uint8_t)*str, xx, y, font );
+
+   return xx-x;
 }
 
 // Draw a character into my display buffer.
@@ -172,6 +188,9 @@ static int DrawChar( uint8_t ch, int x, int y, const FontInfo *font )
    // and last page will get part of the font.
    int pgCt = (y&7) ? bpc+1 : bpc;
 
+   for( int p=0, mask=(1<<p1); p<pgCt; p++, mask<<=1 )
+      dirtyPages |= mask;
+
    // Update all the columns that this font touches
    for( int c=0; c<cols; c++ )
    {
@@ -229,6 +248,7 @@ static int SetupDisplay( void )
 
    // TODO - I should really add some error handling.
    //        not sure exactly what to do though.
+   dirtyPages = 0xff;
    UpdtDisplay();
 
    return 0;
@@ -242,8 +262,8 @@ static void StartDmaWrite( const uint8_t *buff, uint8_t len )
 
    // Setup the DMA.  It will handle writing each byte to the i2c module
    // when it's ready and generate an interrupt when finished
-   dma->channel[5].mAddr = (uint32_t)buff;
    dma->channel[5].config &= ~1;
+   dma->channel[5].mAddr = (uint32_t)buff;
    dma->channel[5].count = len;
    dma->channel[5].config |= 1;
 
@@ -253,8 +273,26 @@ static void StartDmaWrite( const uint8_t *buff, uint8_t len )
 }
 
 // Sets the address at which data will be written in the display
-static void SetPageAddr( uint8_t page, uint8_t col )
+static int SetPageAddr( uint8_t page )
 {
+   // Find the first dirty page starting with the value passed in
+   // and if one is found, begin a write to it.
+   // Returns the page number being written, or -1 if there
+   // isn't one found
+   while( page < 8 )
+   {
+      if( dirtyPages & (1<<page) )
+         break;
+      page++;
+   }
+
+   if( page >= 8 )
+      return -1;
+
+   dirtyPages &= ~(1<<page);
+
+   uint8_t col = 0;
+
    static uint8_t setAddrCmdBuff[4];
    setAddrCmdBuff[0] = 0x00;              // All commands start with zero
    setAddrCmdBuff[1] = 0xB0 | (page&7);   // Set page start address
@@ -262,15 +300,14 @@ static void SetPageAddr( uint8_t page, uint8_t col )
    setAddrCmdBuff[3] = 0x10 | (col>>4);   // Set upper column address
 
    dispState = STATE_SET_PAGE_ADDR;
-   dmaPage = page;
+GPIO_SetPin( DIGIO_A_BASE, 7 );
    StartDmaWrite( setAddrCmdBuff, sizeof(setAddrCmdBuff) );
+   return page;
 }
 
 static void SendPage( uint8_t page )
 {
    page &= 7;
-
-   dirtyPages &= ~(1<<page);
 
    // The first byte that we send is always 0x40
    // which tells the display that this is data, 
@@ -279,7 +316,7 @@ static void SendPage( uint8_t page )
    dispBuff[page][0] = 0x40;
 
    dispState = STATE_WRITE_PAGE;
-   dmaPage = page;
+GPIO_ClrPin( DIGIO_A_BASE, 7 );
    StartDmaWrite(dispBuff[page], NUM_COLS+1 );
 }
 
@@ -287,6 +324,12 @@ void DispISR( void )
 {
    // Clear the interrupt
    I2C_Regs *i2c = (I2C_Regs *)I2C1_BASE;
+
+if( i2c->status & 0x10 )
+   dbgLong[1]++;
+else
+   dbgLong[2]++;
+
    i2c->intClr  = 0x00003F38;
 
    switch( dispState )
@@ -300,16 +343,13 @@ void DispISR( void )
       // We just finished sending a page of data
       // Start writing the next dirty page
       case STATE_WRITE_PAGE:
-         while( ++dmaPage < 8 )
-         {
-            if( dirtyPages & (1<<dmaPage) )
-            {
-               SetPageAddr( dmaPage, 0 );
-               return;
-            }
-         }
-         dispState = STATE_IDLE;
+      {
+         int p = SetPageAddr( dmaPage );
+         if( p < 0 )
+            dispState = STATE_IDLE;
+         dmaPage = p;
          return;
+      }
 
       default:
          dispState = STATE_IDLE;
