@@ -110,7 +110,7 @@ p.Info( pnum='DMN63D8LDW-7', mfg='Diodes Inc', dk='DMN63D8LDW-7CT-ND' )
 p.Print( 'packages/dual_fet' )
 
 # Gage pressure sensor.  Note that pins are numbered backward from normal
-exit( "ERROR ERROR! Pin 1 dot is in wrong location!  Fix that!" )
+#exit( "ERROR ERROR! Pin 1 dot is in wrong location!  Fix that!" )
 p = Part();
 p.InitFourSided( N=12, W=mm(5), L=mm(5), pitch=mm(1.27), pinW=mm(0.7), pinL=mm(0.65), rowD=mm(4.2), exact=True )
 for i in p.pins: 
@@ -165,6 +165,14 @@ p.Info( mfg='Honeywell', pnum='HIH8120-021-001', dk='480-5706-1-ND' )
 p.Create( N=4, pinW=mm(.65), rows=1, pitch=mil(50), L=mm(4.9), W=mm(2), exact=True )
 p.Print( 'packages/HIH8120' )
 
+# SMT humidity sensor
+p = RectPart();
+p.Create( 6, W=mm(3), L=mm(3), pitch=mm(1), pinW=mm(0.4), pinL=mm(.8), padExt=mm(3.5), smt=True, exact=True )
+pi = PadInfo( pinW=mm(1.5), pinL=mm(2.4), exact=True )
+p.pins.append( Pad( n=7, hor=False, x=0, y=0, info=pi ) );
+p.Info( mfg='TE Con', pnum='HPP845E031R5', dk='223-1591-1-ND' );
+p.Print( 'packages/HTU12D' );
+
 # 4-pin Molex connector for serial port & power
 p = Header()
 p.Create( N=4, pinW=mm(1.09), rows=1, L=mm(12.7), W=mm(13.2), rowOff=mm(-13.2/2), exact=True );
@@ -176,3 +184,9 @@ p = RectPart();
 p.Create( 6, W=mm(1.7), L=mm(3.1), pitch=mm(0.95), pinW=mm(0.5), pinL=mm(1.0), padExt=mm(3.2), name="74HC2G14", smt=True, exact=True )
 p.Info( mfg='Nexperia', pnum='74HC2G14GV,125', dk='1727-6046-1-ND' );
 p.Print( "packages/74HC2G14" );
+
+# Mounting hole
+c = Part( ref='' );
+pi = PinInfo( pinW=mil(125), exact=True, plated=False );
+c.pins.append( Pin(-1, 0, 0, pi ));
+c.Print( "packages/mh" );
