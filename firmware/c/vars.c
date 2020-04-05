@@ -2,6 +2,7 @@
 
 #include "binary.h"
 #include "errors.h"
+#include "trace.h"
 #include "utils.h"
 #include "vars.h"
 
@@ -86,10 +87,13 @@ int HandleVarGet( uint8_t *cmd, int len, int max )
       return ReturnErr( cmd, ERR_MISSING_DATA );
 
    uint16_t vid = b2u16( &cmd[2] );
+DbgTrace( 1, vid, 0 );
    if( (vid >= VARID_MAX) || !(varList[vid]) )
       return ReturnErr( cmd, ERR_UNKNOWN_VAR );
 
    VarInfo *info = varList[vid];
+DbgTraceP( 2, info );
+DbgTraceP( 3, info->ptr );
 
    // Make sure the buffer is long enough to hold the
    // variable data and two byte header
@@ -97,6 +101,7 @@ int HandleVarGet( uint8_t *cmd, int len, int max )
       return ReturnErr( cmd, ERR_SHORT_CMD );
 
    int err = info->get( info, &cmd[2], max-2 );
+DbgTrace( 4, err, info->size );
    if( err )
       return ReturnErr( cmd, err );
 
@@ -148,8 +153,11 @@ int VarGet32( VarInfo *info, uint8_t *buff, int max )
    // Make sure there's at least two bytes of space in the passed buffer
    if( max < sizeof(int32_t) )
       return ERR_MISSING_DATA;
+DbgTraceP( 0x10, info );
+DbgTraceP( 0x11, info->ptr );
 
-   uint32_t val = *(uint16_t*)info->ptr;
+   uint32_t val = *(uint32_t*)info->ptr;
+DbgTraceL( 0x12, val );
    u32_2_u8( val, buff );
    return ERR_OK;
 }

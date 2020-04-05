@@ -62,33 +62,33 @@ typedef struct
 } IntCtrl_Regs;
 
 
-//// System control registers
-//#define SYSCTL_BASE                 0xE000E000
-//typedef struct
-//{
-//   REG rsvd0;                    // 0xE000E000
-//   REG intType;                  // 0xE000E004
-//   REG auxCtrl;                  // 0xE000E008
-//   REG rsvd1;                    // 0xE000E00C
-//   REG systick[3];               // 0xE000E010
-//   REG rsvd2[57];
-//   REG nvic[768];                // 0xE000E100
-//   REG cpuid;                    // 0xE000ED00
-//   REG intCtrl;                  // 0xE000ED04
-//   REG vtable;                   // 0xE000ED08
-//   REG apInt;                    // 0xE000ED0C
-//   REG sysCtrl;                  // 0xE000ED10
-//   REG cfgCtrl;                  // 0xE000ED14
-//   REG sysPri[3];                // 0xE000ED18
-//   REG sysHdnCtrl;               // 0xE000ED24
-//   REG faultStat;                // 0xE000ED28
-//   REG hardFaultStat;            // 0xE000ED2C
-//   REG rsvd3;
-//   REG mmFaultAddr;              // 0xE000ED34
-//   REG faultAddr;                // 0xE000ED38
-//   REG rsvd4[19];
-//   REG cpac;                     // 0xE000ED88
-//} SysCtrl_Reg;
+// System control registers
+#define SYSCTL_BASE                 0xE000E000
+typedef struct
+{
+   REG rsvd0;                    // 0xE000E000
+   REG intType;                  // 0xE000E004
+   REG auxCtrl;                  // 0xE000E008
+   REG rsvd1;                    // 0xE000E00C
+   REG systick[3];               // 0xE000E010
+   REG rsvd2[57];
+   REG nvic[768];                // 0xE000E100
+   REG cpuid;                    // 0xE000ED00
+   REG intCtrl;                  // 0xE000ED04
+   REG vtable;                   // 0xE000ED08
+   REG apInt;                    // 0xE000ED0C
+   REG sysCtrl;                  // 0xE000ED10
+   REG cfgCtrl;                  // 0xE000ED14
+   REG sysPri[3];                // 0xE000ED18
+   REG sysHdnCtrl;               // 0xE000ED24
+   REG faultStat;                // 0xE000ED28
+   REG hardFaultStat;            // 0xE000ED2C
+   REG rsvd3;
+   REG mmFaultAddr;              // 0xE000ED34
+   REG faultAddr;                // 0xE000ED38
+   REG rsvd4[19];
+   REG cpac;                     // 0xE000ED88
+} SysCtrl_Reg;
 
 // Digital I/O
 #define DIGIO_A_BASE                0x48000000

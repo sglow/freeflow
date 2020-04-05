@@ -29,8 +29,8 @@ void CPU_Init( void )
    RCC_Regs *rcc = (RCC_Regs *)RCC_BASE;
 
    // Enable the FPU
-//   SysCtrl_Reg *sysCtl = (SysCtrl_Reg *)SYSCTL_BASE;
-//   sysCtl->cpac = 0x00F00000;
+   SysCtrl_Reg *sysCtl = (SysCtrl_Reg *)SYSCTL_BASE;
+   sysCtl->cpac = 0x00F00000;
 
    // Reset caches and set latency for 80MHz opperation
    FlashReg *flash = (FlashReg *)FLASH_BASE;

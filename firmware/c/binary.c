@@ -167,14 +167,6 @@ static int HandlePoke( uint8_t *cmd, int len, int max )
 
    uint32_t addr = b2u32( &cmd[2] );
 
-   if( addr == 0x12345678 )
-   {
-      uint32_t *ptr = (uint32_t*)0x40020000;
-      dbgLong[2] = *ptr++;
-      dbgLong[3] = *ptr++;
-      return ReturnErr( cmd, ERR_OK );
-   }
-
    // If the address is less then 0x80, then I add the offset to the
    // start of RAM.  This is just for convenience since I reserve the 
    // first few bytes of RAM for debugging purposes.

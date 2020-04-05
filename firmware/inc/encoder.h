@@ -5,6 +5,7 @@
 
 // prototypes
 void InitEncoder( void );
+int GetEncoderCount( void );
 
 
 #endif

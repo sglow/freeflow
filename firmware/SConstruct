@@ -7,7 +7,8 @@ from elffile import ElfFile;
 
 def main():
    mainsrc = Split( 'main.c cpu.c uart.c sercmd.c ascii.c string.c binary.c buzzer.c encoder.c ' +
-                    'io.c timer.c loop.c adc.c trace.c vars.c pressure.c display.c sprintf.c ');
+                    'io.c timer.c loop.c adc.c trace.c vars.c pressure.c display.c sprintf.c ui.c ' +
+                    'calc.c');
    asmsrc = Split( 'startup.s' )
 
    prefix = 'arm-none-eabi'

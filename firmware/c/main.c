@@ -12,6 +12,7 @@
 #include "timer.h"
 #include "trace.h"
 #include "uart.h"
+#include "ui.h"
 #include "utils.h"
 
 int main( void )
@@ -35,6 +36,7 @@ GPIO_Output( DIGIO_A_BASE, 7, 0 );
    TraceInit();
    InitPressure();
    InitDisplay();
+   InitUserInteface();
 
    LoopStart();
 
@@ -45,6 +47,7 @@ GPIO_Output( DIGIO_A_BASE, 7, 0 );
       PollSerCmd();
       BuzzerPoll();
       PollIO();
-      PollDisplay();
+      PollUserInteface();
    }
 }
+

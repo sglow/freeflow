@@ -1,6 +1,7 @@
 /* loop.c */
 
 #include "adc.h"
+#include "calc.h"
 #include "cpu.h"
 #include "loop.h"
 #include "pressure.h"
@@ -70,6 +71,7 @@ void LoopISR( void )
 
    AdcRead();
    PollPressure();
+   UpdateCalculations();
 
    SaveTrace();
 }

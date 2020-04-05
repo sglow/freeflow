@@ -50,14 +50,19 @@ class VarInfo:
 
 
 allVars = [
-   VarInfo( 0, "trace_ctrl",    '0x%04x', 'u16' ),
-   VarInfo( 1, "trace_period",  '%d',     'u16' ),
-   VarInfo( 2, "trace_samples", '%d',     'u16' ),
-   VarInfo( 3, "trace_var1",    '%d',     'u16' ),
-   VarInfo( 4, "trace_var2",    '%d',     'u16' ),
-   VarInfo( 5, "trace_var3",    '%d',     'u16' ),
-   VarInfo( 6, "trace_var4",    '%d',     'u16' ),
-   VarInfo( 7, "loop_freq",     '%d',     'u16' ),
+   VarInfo(  0, "trace_ctrl",    '0x%04x', 'u16' ),
+   VarInfo(  1, "trace_period",  '%d',     'u16' ),
+   VarInfo(  2, "trace_samples", '%d',     'u16' ),
+   VarInfo(  3, "trace_var1",    '%d',     'u16' ),
+   VarInfo(  4, "trace_var2",    '%d',     'u16' ),
+   VarInfo(  5, "trace_var3",    '%d',     'u16' ),
+   VarInfo(  6, "trace_var4",    '%d',     'u16' ),
+   VarInfo(  7, "loop_freq",     '%d',     'u16' ),
+   VarInfo(  8, "pressure1",     '%d',     'i32' ),
+   VarInfo(  9, "pressure2",     '%d',     'i32' ),
+   VarInfo( 10, "pres_off1",     '%d',     'u32' ),
+   VarInfo( 11, "pres_off2",     '%d',     'u32' ),
+   VarInfo( 12, "poff_calc",     '%d',     'u16' ),
 ]
 
 # Names for trace variables.
@@ -72,8 +77,10 @@ traceVars = [
       ('diff_pressure',  'u'),
       ('bat_volt',       'u'),
       ('dpCal',          'u'),
-      ('pres1',          'u'),
-      ('pres2',          'u'),
+      ('pres1',          'i'),
+      ('pres2',          'i'),
+      ('pres_diff',      'i'),
+      ('flow_rate',      'i'),
       ]
 
 
@@ -375,6 +382,12 @@ def poke( addr, dat, ptype ):
 
    SendCmd( OP_POKE, Split32( addr )+dat )
 
+def poke32( addr, dat ):
+   poke( addr, dat, 'long' )
+
+def poke16( addr, dat ):
+   poke( addr, dat, 'short' )
+
 def GetVar( var ):
    if( not var in varDict ):
       return None;
@@ -444,10 +457,12 @@ def GetTrace():
 
    return ret
 
-def TraceGraph():
-   dat = GetTrace()
+def TraceGraph( dat=None ):
+
    if( dat == None ):
-      return
+      dat = GetTrace()
+      if( dat == None ):
+         return
 
    freq = float(GetVar( 'loop_freq' ));
    per = GetVar( 'trace_period' )

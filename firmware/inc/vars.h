@@ -49,8 +49,12 @@ typedef struct _VarInfo
 #define VARID_TRACE_VAR3        5
 #define VARID_TRACE_VAR4        6
 #define VARID_LOOP_FREQ         7
+#define VARID_PRESSURE1         8
+#define VARID_PRESSURE2         9
+#define VARID_POFF1             10
+#define VARID_POFF2             11
+#define VARID_POFF_CALC         12
 
-#define VARID_CAL0              20
 #define VARID_MAX               50
 
 // prototypes

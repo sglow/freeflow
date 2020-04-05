@@ -3,8 +3,11 @@
 #ifndef _DEF_INC_DISPLAY
 #define _DEF_INC_DISPLAY
 
-// Multi-byte commands
-#define DISP_MCMD_SET_CONTRAST            0x81
+#include <stdint.h>
+
+#define FONT_FREESANS_20       0
+#define FONT_FREESANS_16       1
+#define FONT_FREESANS_12       2
 
 // Represents one character of a font
 typedef struct
@@ -27,7 +30,16 @@ typedef struct
 
 // prototypes
 void InitDisplay();
-void PollDisplay();
 void DispISR( void );
+int SetFont( uint8_t id );
+const FontInfo *GetFontInfo( uint8_t id );
+const FontInfo *CrntFont( void );
+int DrawChar( uint8_t ch, int x, int y );
+int DrawString( const char *str, int x, int y );
+void ClearDisplay( void );
+void FillRect( int x1, int y1, int w, int h, int color );
+void SetPixel( int x, int y );
+void ClearPixel( int x, int y );
+void UpdateDisplay( void );
 
 #endif

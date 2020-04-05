@@ -76,8 +76,10 @@ static traceFunc traceVarFunc[] =
    GetDiffPressure,         // 5 Differential pressure reading
    GetBatVolt,              // 6 Battery voltage
    GetDPcal,                // 7 Calibrated differential pressure
-   GetPressure1,            // 8 Gauge pressure sensor 1
-   GetPressure2,            // 9 Gauge pressure sensor 2
+   (traceFunc)GetPressure1,            // 8 Gauge pressure sensor 1
+   (traceFunc)GetPressure2,            // 9 Gauge pressure sensor 2
+   (traceFunc)GetPressureDiff16,       // 10 Difference between pressure sensors
+   (traceFunc)TracePressureFlowRate,   // 11 Calibrated flow rate (cc/sec)
 };
 
 

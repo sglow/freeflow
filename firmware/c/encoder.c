@@ -31,3 +31,10 @@ void InitEncoder( void )
    // Enable the timer
    tmr->ctrl[0]   = 0x00000001;
 }
+
+// Get the current encoder count value
+int GetEncoderCount( void )
+{
+   TimerRegs *tmr = (TimerRegs *)TIMER2_BASE;
+   return tmr->counter;
+}

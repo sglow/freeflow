@@ -44,18 +44,6 @@ static uint8_t flag;
 static int16_t cmdNdx;
 static int16_t rspLen;
 
-void SetDbg( int x )
-{
-if( x == dbgInt[0] ) return;
-dbgInt[0] = x;
-
-if( x&1 ) GPIO_SetPin( DIGIO_B_BASE, 6 );
-else      GPIO_ClrPin( DIGIO_B_BASE, 6 );
-
-if( x&2 ) GPIO_SetPin( DIGIO_B_BASE, 7 );
-else      GPIO_ClrPin( DIGIO_B_BASE, 7 );
-}
-
 // This function is constantly called from the background task.
 // It reads bytes from the UART and detects the end of a command.
 // When a new command has been received, it passes it to the command

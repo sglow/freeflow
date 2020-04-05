@@ -7,7 +7,11 @@
 void InitPressure( void );
 void PollPressure( void );
 void SPI1_ISR( void );
-uint16_t GetPressure1( void );
-uint16_t GetPressure2( void );
+int16_t GetPressure1( void );
+int16_t GetPressure2( void );
+float GetPressureDiff( void );
+int16_t GetPressureDiff16( void );
+float GetPressureFlowRate( void );
+int16_t TracePressureFlowRate( void );
 
 #endif

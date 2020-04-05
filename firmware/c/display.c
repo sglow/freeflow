@@ -2,7 +2,10 @@
 
 #include "cpu.h"
 #include "display.h"
-#include "myfont.h"
+#include "errors.h"
+#include "font_freesans20.h"
+#include "font_freesans16.h"
+#include "font_freesans12.h"
 #include "loop.h"
 #include "sprintf.h"
 #include "string.h"
@@ -28,8 +31,6 @@
 #define STATE_DOING_INIT     3     // Doing one time init at startup
 
 // local functions
-static int DrawString( const char *str, int x, int y, const FontInfo *font );
-static int DrawChar( uint8_t ch, int x, int y, const FontInfo *font );
 static int SetupDisplay( void );
 static void StartDmaWrite( const uint8_t *buff, uint8_t len );
 static int SetPageAddr( uint8_t page );
@@ -38,8 +39,14 @@ static void SendPage( uint8_t page );
 // local data
 static uint8_t dirtyPages;
 static uint8_t dmaPage;
+static uint8_t crntFont;
 static volatile uint8_t dispState;
-static uint32_t lastDispUpdt;
+static const FontInfo *fontList[] = 
+{
+   &freesans20,
+   &freesans16,
+   &freesans12,
+};
 
 // The display buffer is a local copy of the RAM stored in the display itself.
 // I write to this buffer then use DMA to send it (via i2c) to the display.
@@ -97,36 +104,134 @@ void InitDisplay()
    SetupDisplay();
 }
 
-void UpdtDisplay( void )
+// Start copying contents of local page buffer to the OLED display
+// This is done using DMA, so this returns immediately after starting
+// the copy.  The copy itself takes a bit over 20ms.
+void UpdateDisplay( void )
 {
    dmaPage = SetPageAddr( 0 );
 }
 
-// Called from background task
-void PollDisplay()
+int SetFont( uint8_t id )
 {
-   if( LoopsSince( lastDispUpdt ) < MsToLoop( 50 ) )
-      return;
-
-   lastDispUpdt = GetLoopCt();
-
-   memset( dispBuff, 0, sizeof(dispBuff));
-
-   char buff[80];
-   sprintf( buff, "Test: %6d", GetLoopCt() );
-
-   DrawString( buff, dbgU8[0], dbgU8[1], &myfont );
-
-//   dirtyPages = 0xff;
-   UpdtDisplay();
+   if( id >= ARRAY_CT(fontList) )
+      return ERR_RANGE;
+      
+   crntFont = id;
+   return ERR_OK;
 }
 
-static int DrawString( const char *str, int x, int y, const FontInfo *font )
+const FontInfo *GetFontInfo( uint8_t id )
+{
+   if( id >= ARRAY_CT(fontList) )
+      return 0;
+
+   return fontList[id];
+}
+
+const FontInfo *CrntFont( void )
+{
+   return GetFontInfo( crntFont );
+}
+
+// Clear the entire display
+void ClearDisplay( void )
+{
+   memset( dispBuff, 0, sizeof(dispBuff));
+   dirtyPages = 0xFF;
+}
+
+// Set a pixel without checking bounds
+// This is used locally after checks have already been made
+static inline void SetPixel_NoCheck( int x, int y )
+{
+   // Find the page
+   int p = y>>3;
+
+   // Find the right column in the page
+   uint8_t mask = 1 << (y&7);
+
+   // Note that there's an extra column at the start of 
+   // display memory.
+   dispBuff[p][x+1] |= mask;
+}
+
+// Clear a pixel without checking bounds
+// This is used locally after checks have already been made
+static inline void ClearPixel_NoCheck( int x, int y )
+{
+   // Find the page
+   int p = y>>3;
+
+   // Find the right column in the page
+   uint8_t mask = 1 << (y&7);
+
+   // Note that there's an extra column at the start of 
+   // display memory.
+   dispBuff[p][x+1] &= ~mask;
+}
+
+void SetPixel( int x, int y )
+{
+   if( (x<0) || (x>=NUM_COLS) ) return;
+   if( (y<0) || (y>=NUM_ROWS) ) return;
+   SetPixel_NoCheck( x, y );
+}
+
+void ClearPixel( int x, int y )
+{
+   if( (x<0) || (x>=NUM_COLS) ) return;
+   if( (y<0) || (y>=NUM_ROWS) ) return;
+   ClearPixel_NoCheck( x, y );
+}
+
+// Fill an are of the screen.
+// x,y   top left pixel to fill
+// w,h   width and height of rectangle
+// color 0 for black.  non-zero for white
+void FillRect( int x1, int y1, int w, int h, int color )
+{
+   if( (w < 1) || (h < 1) ) return;
+   if( x1 >= NUM_COLS ) return;
+   if( y1 >= NUM_ROWS ) return;
+
+   int x2 = x1 + w - 1;
+   int y2 = y1 + h - 1;
+   if( (x2 < 0) || (y2 < 0) ) return;
+
+   if( x1 < 0 ) x1 = 0;
+   if( y1 < 0 ) y1 = 0;
+   if( x2 >= NUM_COLS ) x2 = NUM_COLS-1;
+   if( y2 >= NUM_ROWS ) y2 = NUM_ROWS-1;
+
+   // TODO:
+   // I set/clear pixels one at a time.
+   // This could be more efficient
+   if( color )
+   {
+      for( int x=x1; x<=x2; x++ )
+         for( int y=y1; y<=y2; y++ )
+            SetPixel_NoCheck( x, y );
+   }
+   else
+   {
+      for( int x=x1; x<=x2; x++ )
+         for( int y=y1; y<=y2; y++ )
+            ClearPixel_NoCheck( x, y );
+   }
+}
+
+// Draw a string at an x,y pixel location.
+// Pixel location is upper left hand corner of the
+// first character.
+//
+// Returns the total length of the string in pixels
+int DrawString( const char *str, int x, int y )
 {
    int xx = x;
 
    for( ; *str; str++ )
-      xx += DrawChar( (uint8_t)*str, xx, y, font );
+      xx += DrawChar( (uint8_t)*str, xx, y );
 
    return xx-x;
 }
@@ -135,8 +240,11 @@ static int DrawString( const char *str, int x, int y, const FontInfo *font )
 // x & y give the pixel location of the upper left corner of the
 // character
 // Returns x advance for this character
-static int DrawChar( uint8_t ch, int x, int y, const FontInfo *font )
+int DrawChar( uint8_t ch, int x, int y )
 {
+   const FontInfo *font = CrntFont();
+   if( !font ) return 0;
+
    // Check to make sure the character value is in our font
    // If not we just don't print anything there
    if( (ch < font->firstChar) || (ch > font->lastChar) )
@@ -249,7 +357,7 @@ static int SetupDisplay( void )
    // TODO - I should really add some error handling.
    //        not sure exactly what to do though.
    dirtyPages = 0xff;
-   UpdtDisplay();
+   dmaPage = SetPageAddr( 0 );
 
    return 0;
 }
@@ -324,11 +432,6 @@ void DispISR( void )
 {
    // Clear the interrupt
    I2C_Regs *i2c = (I2C_Regs *)I2C1_BASE;
-
-if( i2c->status & 0x10 )
-   dbgLong[1]++;
-else
-   dbgLong[2]++;
 
    i2c->intClr  = 0x00003F38;
 

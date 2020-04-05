@@ -6,8 +6,9 @@
 #include "timer.h"
 #include "trace.h"
 #include "utils.h"
+#include "vars.h"
 
-//#define REV2
+#define REV2
 
 // The Gauge pressure sensors use an SPI serial interface
 // All sensors share the same SPI bus with different chip selects:
@@ -27,15 +28,32 @@
 
 // local functions
 static void SelectSensor( int which );
+static int SetOffsetTime( VarInfo *info, uint8_t *buff, int len );
 
 // local data
 static uint16_t isrLastRead;
-static uint32_t pressure[2];
+static uint32_t praw[2];
+static int32_t  padj[2];
 static uint8_t pressureState;
 static uint32_t lastPressureRead;
+static VarInfo varPressure[2];
+static VarInfo varPoffset[2];
+static VarInfo varOffCalc;
+static uint32_t pOff[2];
+static uint32_t offSum[2];
+static uint16_t offCalcTime;
+static uint16_t offCalcCount;
 
 void InitPressure( void )
 {
+   // Init some variables
+   VarInit( &varPressure[0], VARID_PRESSURE1,   "pressure1", VAR_TYPE_INT32, &padj[0], VAR_FLG_READONLY );
+   VarInit( &varPressure[1], VARID_PRESSURE2,   "pressure2", VAR_TYPE_INT32, &padj[1], VAR_FLG_READONLY );
+   VarInit( &varPoffset[0],  VARID_POFF1,       "poff1",     VAR_TYPE_INT32, &pOff[0], 0 );
+   VarInit( &varPoffset[1],  VARID_POFF2,       "poff2",     VAR_TYPE_INT32, &pOff[1], 0 );
+   VarInit( &varOffCalc,     VARID_POFF_CALC,   "poffcalc",  VAR_TYPE_INT16, &offCalcTime, 0 );
+   varOffCalc.set = SetOffsetTime;
+
    // Configure the pins for SPI use
    GPIO_PinAltFunc( DIGIO_A_BASE, 6, 5 );
    GPIO_PinAltFunc( DIGIO_B_BASE, 3, 5 );
@@ -65,14 +83,69 @@ void InitPressure( void )
    EnableInterrupt( INT_VECT_SPI1, 3 );
 }
 
-uint16_t GetPressure1( void )
+int16_t GetPressure1( void )
 {
-   return pressure[0]>>8;
+   return padj[0]>>8;
 }
 
-uint16_t GetPressure2( void )
+int16_t GetPressure2( void )
 {
-   return pressure[1]>>8;
+   return padj[1]>>8;
+}
+
+int16_t GetPressureDiff16( void )
+{
+   return Clip16( (padj[1]-padj[0])>>8 );
+}
+
+static const int32_t calData[] =
+{
+     47393,       // 100
+    171011,       // 200
+    366416,       // 300
+    636238,       // 400
+    994108,       // 500
+   1420935,       // 600
+   1897852,       // 700
+   2441713,       // 800
+   2889541,       // 900
+   3213755,       // 1000
+   3570770,       // 1100
+   3963378,       // 1200
+   4398388,       // 1300
+   4849933,       // 1400
+   5188297,       // 1500
+   5623387,       // 1600
+   5983148,       // 1700
+   6359482,       // 1800
+   6612908,       // 1900
+   6673088,       // 2000
+};
+
+// Return calibrated flow rate in cc/sec units
+float GetPressureFlowRate( void )
+{
+   float dp = padj[1]-padj[0];
+
+   int prev = 0;
+   for( int i=0; i<ARRAY_CT(calData); i++ )
+   {
+      if( dp <= calData[i] )
+      {
+         float N = dp - prev;
+         float D = calData[i] - prev;
+
+         return 100*(i) + 100*N/D;
+      }
+      prev = calData[i];
+   }
+
+   return 2000;
+}
+
+int16_t TracePressureFlowRate( void )
+{
+   return GetPressureFlowRate();
 }
 
 // This is called from the high priority loop every cycle.
@@ -89,14 +162,9 @@ void PollPressure( void )
    SPI_Regs *spi = (SPI_Regs *)SPI1_BASE;
 
    SelectSensor( 1 );
-//DbgTrace( 1, spi->status, 0 );
 
    spi->data = 0xAA00;
-//   uint16_t a = spi->status;
    spi->data = 0x0000;
-//   uint16_t b = spi->status;
-
-//   DbgTrace( 2, a, b );
 
    pressureState = STATE_READ1H;
 }
@@ -116,7 +184,8 @@ void SPI1_ISR( void )
          return;
 
       case STATE_READ1L:
-         pressure[0] = (((uint32_t)isrLastRead)<<16) | value;
+         praw[0] = 0x00FFFFFF & ((((uint32_t)isrLastRead)<<16) | value);
+         padj[0] = praw[0] - pOff[0];
 #ifdef REV2
          SelectSensor( 2 );
          pressureState = STATE_READ2H;
@@ -135,8 +204,23 @@ void SPI1_ISR( void )
 
       case STATE_READ2L:
          SelectSensor( 0 );
-         pressure[1] = (((uint32_t)isrLastRead)<<16) | value;
+         praw[1] = 0x00FFFFFF & ((((uint32_t)isrLastRead)<<16) | value);
+         padj[1] = praw[1] - pOff[1];
          pressureState = STATE_IDLE;
+
+         if( offCalcTime )
+         {
+            offSum[0] += praw[0];
+            offSum[1] += praw[1];
+            offCalcCount++;
+            offCalcTime--;
+            if( !offCalcTime )
+            {
+               pOff[0] = offSum[0] / offCalcCount;
+               pOff[1] = offSum[1] / offCalcCount;
+            }
+         }
+
          return;
    }
 }
@@ -161,3 +245,18 @@ static void SelectSensor( int which )
    if( which )
       BusyWait( 3 );
 }
+
+static int SetOffsetTime( VarInfo *info, uint8_t *buff, int len )
+{
+   int err = VarSet16( info, buff, len );
+   if( err ) return err;
+
+   IntDisable();
+   offSum[0] = 0;
+   offSum[1] = 0;
+   offCalcCount = 0;
+   IntEnable();
+
+   return 0;
+}
+
