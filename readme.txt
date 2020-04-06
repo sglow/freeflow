@@ -19,7 +19,13 @@ The schematics and layout files here were made using the open source gEDA tools;
 for schematic capture and pcb for layout.  These tools can be downloaded here:
    http://www.geda-project.org/
 
-As of 3/22/20 this project is in the early stages.  A first cut of the PCB has been designed
-but no firmware has been started yet.  I'll try to keep this file updated as things progress.
+As of 4/6/20 this project is in the early stages.  There have been two revisions of the PCB
+(check the git history to see earlier versions).  The main difference is the type of sensors
+used to measure the pressure drop across the venturi tube.
+
+Firmware is working but very preliminary.  Things like calibration values are hard coded at
+the moment.  It's under active development and changing rapidly.
+
+I'll try to keep this file updated as things progress.
 
 - Steve Glow
