@@ -1,0 +1,27 @@
+This firmware is being developed on a Linux machine using tools from
+the Linux repository.  It's currently being developed on Ubuntu 18.04
+although the specific Linux version shouldn't really matter.
+
+No IDE is being used here, files are edited using a text editor and
+built from the command line.
+
+The build system is based on scons (see scons.org for details).
+To install this in a Debian based Linux system like Ubuntu:
+   sudo apt install scons
+
+To build the firmware, just enter 
+   scons
+
+The compiler I'm using is straight out of the Ubuntu repositories.
+It can be installed using the command:
+
+   sudo apt install gcc-arm-none-eabi
+
+I think that will pull in everything needed (assembler, linker, etc)
+Please let me know if I've missed anything.
+
+Once the firmware is built, start the board up running the internal 
+boot loader and use the bootloader.py script to flash it.
+
+Steve Glow
+sglow@embeddedintelligence.com
