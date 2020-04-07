@@ -190,3 +190,22 @@ c = Part( ref='' );
 pi = PinInfo( pinW=mil(125), exact=True, plated=False );
 c.pins.append( Pin(-1, 0, 0, pi ));
 c.Print( "packages/mh" );
+
+# SMT test point
+#p = Part();
+#p.pins.append( Pad( 1, False, 0,  0, PadInfo( mm(1), mm(1), exact=True ), round=True, showname=False ) );
+#p.pins[0].flags.append( 'nopaste' );
+#p.Print( "packages/testpoint" );
+
+# Hirose 20 pin socket connector
+p = Header()
+p.Create( N=20, pinW=mm(.25), pinL=mm(1.1), rows=2, L=mm(7.6), W=mm(5), pitch=mm(.5), padExt=mm(6.6), exact=True, smt=True );
+p.Info( mfg='Hirose', pnum='DF23C-20DS-0.5V(51)', dk='H124690CT-ND' )
+p.Print( 'packages/header2x10s' )
+      
+# Hirose 20 pin plug connector
+p = Header()
+p.Create( N=20, pinW=mm(.25), pinL=mm(1.0), rows=2, L=mm(6.5), W=mm(3.1), pitch=mm(.5), padExt=mm(4.9), exact=True, smt=True );
+p.Info( mfg='Hirose', pnum='DF23C-20DP-0.5V(92)', dk='H124749CT-ND' )
+p.Print( 'packages/header2x10p' )
+      
