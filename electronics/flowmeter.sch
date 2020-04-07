@@ -761,7 +761,7 @@ N 48600 46900 48700 46900 4
 C 48700 44900 1 0 0 header2x10.sym
 {
 T 49100 47200 5 10 1 1 0 0 1
-refdes=J?
+refdes=J3
 T 47300 47100 5 10 0 0 0 0 1
 footprint=header2x10p
 }

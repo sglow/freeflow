@@ -969,7 +969,7 @@ Element["" "sm_0603" "C7" "0.1uF" 1925.00mil 1200.00mil -25.00mil 30.00mil 0 100
 
 	)
 
-Element["" "diode" "D6" "unknown" 3400.00mil 1125.00mil -13.46mil 30.39mil 0 77 ""]
+Element["" "diode" "D6" "unknown" 3400.00mil 1125.00mil -138.46mil -29.61mil 0 77 ""]
 (
 	Pad[-47.24mil 0.0000 -43.31mil 0.0000 35.43mil 20.00mil 45.43mil "1" "1" "square"]
 	Pad[43.31mil 0.0000 47.24mil 0.0000 35.43mil 20.00mil 45.43mil "2" "2" "square,edge2"]
@@ -1064,7 +1064,7 @@ Element["" "header1x2" "J1" "unknown" 3400.00mil 1250.00mil -175.00mil -20.00mil
 
 	)
 
-Element["" "sm_0603" "R7" "10k" 2275.00mil 650.00mil 105.00mil -45.00mil 3 77 ""]
+Element["" "sm_0603" "R7" "10k" 2275.00mil 650.00mil -20.00mil -75.00mil 0 77 ""]
 (
 	Pad[34.00mil 0.0000 36.00mil 0.0000 38.00mil 20.00mil 48.00mil "1" "1" "square,edge2"]
 	Pad[-36.00mil 0.0000 -34.00mil 0.0000 38.00mil 20.00mil 48.00mil "2" "2" "square"]
@@ -1120,7 +1120,7 @@ Element["" "sm_0603" "C6" "0.1uF" 1400.00mil 1325.00mil -134.00mil -31.00mil 0 7
 
 	)
 
-Element["" "sm_0603" "R11" "10k" 1950.00mil 600.00mil -100.00mil 25.00mil 1 73 ""]
+Element["" "sm_0603" "R11" "10k" 1950.00mil 600.00mil -35.00mil 35.00mil 0 73 ""]
 (
 	Pad[-36.00mil 0.0000 -34.00mil 0.0000 38.00mil 20.00mil 48.00mil "1" "1" "square"]
 	Pad[34.00mil 0.0000 36.00mil 0.0000 38.00mil 20.00mil 48.00mil "2" "2" "square,edge2"]
@@ -1138,7 +1138,7 @@ Element["" "sm_0603" "C8" "0.1uF" 1950.00mil 975.00mil -10.00mil 70.00mil 0 77 "
 
 	)
 
-Element["" "buzzer" "U3" "unknown" 3100.00mil 725.00mil 26.57mil 106.57mil 0 100 ""]
+Element["" "buzzer" "U3" "unknown" 3100.00mil 725.00mil -28.43mil -193.43mil 0 100 ""]
 (
 	Pad[74.80mil -92.52mil 74.80mil -84.65mil 51.18mil 20.00mil 57.18mil "1" "1" "square"]
 	Pad[-62.99mil -92.52mil -62.99mil -84.65mil 51.18mil 20.00mil 57.18mil "2" "2" "square"]
@@ -1204,7 +1204,7 @@ Element["" "USB" "J2" "unknown" 3400.00mil 900.00mil -185.00mil -20.00mil 0 100 
 
 	)
 
-Element["onsolder" "header2x10p" "J?" "unknown" 2075.00mil 750.00mil -61.02mil 197.95mil 0 100 "auto"]
+Element["onsolder" "header2x10p" "J3" "unknown" 2075.00mil 750.00mil 21.02mil 147.05mil 2 100 "auto"]
 (
 	Pad[-91.54mil 88.58mil -62.01mil 88.58mil 9.84mil 20.00mil 14.76mil "1" "1" "onsolder,square"]
 	Pad[62.01mil 88.58mil 91.54mil 88.58mil 9.84mil 20.00mil 14.76mil "2" "2" "onsolder,square,edge2"]
@@ -1236,7 +1236,7 @@ Element["onsolder" "header2x10p" "J?" "unknown" 2075.00mil 750.00mil -61.02mil 1
 
 	)
 
-Element["" "dual_fet" "Q1" "unknown" 1675.00mil 625.00mil -145.00mil -30.00mil 0 100 ""]
+Element["" "dual_fet" "Q1" "unknown" 1675.00mil 625.00mil -25.00mil 70.00mil 0 100 ""]
 (
 	Pad[33.86mil 25.59mil 40.94mil 25.59mil 16.54mil 20.00mil 21.06mil "1" "1" "square,edge2"]
 	Pad[33.86mil 0.0000 40.94mil 0.0000 16.54mil 20.00mil 21.06mil "2" "2" "square,edge2"]
@@ -1838,9 +1838,9 @@ NetList()
 		Connect("C8-1")
 		Connect("D3-1")
 		Connect("D5-2")
+		Connect("J3-1")
+		Connect("J3-2")
 		Connect("J4-2")
-		Connect("J?-1")
-		Connect("J?-2")
 		Connect("R4-1")
 		Connect("R5-1")
 		Connect("R6-1")
@@ -1858,7 +1858,7 @@ NetList()
 	)
 	Net("BOARD_ID" "(unknown)")
 	(
-		Connect("J?-7")
+		Connect("J3-7")
 		Connect("R11-2")
 		Connect("U1-10")
 	)
@@ -1924,10 +1924,10 @@ NetList()
 		Connect("C8-2")
 		Connect("J1-2")
 		Connect("J2-5")
+		Connect("J3-19")
+		Connect("J3-20")
 		Connect("J4-1")
 		Connect("J5-1")
-		Connect("J?-19")
-		Connect("J?-20")
 		Connect("Q1-1")
 		Connect("Q1-4")
 		Connect("R1-1")
@@ -1942,62 +1942,62 @@ NetList()
 	)
 	Net("I2C_SCL" "(unknown)")
 	(
-		Connect("J?-15")
+		Connect("J3-15")
 		Connect("U1-13")
 	)
 	Net("I2C_SDA" "(unknown)")
 	(
-		Connect("J?-8")
+		Connect("J3-8")
 		Connect("U1-27")
 	)
 	Net("SPARE1" "(unknown)")
 	(
-		Connect("J?-3")
+		Connect("J3-3")
 		Connect("U1-6")
 	)
 	Net("SPARE2" "(unknown)")
 	(
-		Connect("J?-5")
+		Connect("J3-5")
 		Connect("U1-9")
 	)
 	Net("SPARE3" "(unknown)")
 	(
-		Connect("J?-9")
+		Connect("J3-9")
 		Connect("U1-11")
 	)
 	Net("SPARE4" "(unknown)")
 	(
-		Connect("J?-17")
+		Connect("J3-17")
 		Connect("U1-14")
 	)
 	Net("SPARE5" "(unknown)")
 	(
-		Connect("J?-4")
+		Connect("J3-4")
 		Connect("U1-3")
 	)
 	Net("SPI_CLK" "(unknown)")
 	(
-		Connect("J?-10")
+		Connect("J3-10")
 		Connect("U1-26")
 	)
 	Net("SPI_MISO" "(unknown)")
 	(
-		Connect("J?-13")
+		Connect("J3-13")
 		Connect("U1-12")
 	)
 	Net("SPI_MOSI" "(unknown)")
 	(
-		Connect("J?-6")
+		Connect("J3-6")
 		Connect("U1-28")
 	)
 	Net("SWCLK" "(unknown)")
 	(
-		Connect("J?-14")
+		Connect("J3-14")
 		Connect("U1-24")
 	)
 	Net("SWDIO" "(unknown)")
 	(
-		Connect("J?-16")
+		Connect("J3-16")
 		Connect("U1-23")
 	)
 	Net("unnamed_net1" "(unknown)")
