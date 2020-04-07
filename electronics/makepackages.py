@@ -185,10 +185,12 @@ p.Create( 6, W=mm(1.7), L=mm(3.1), pitch=mm(0.95), pinW=mm(0.5), pinL=mm(1.0), p
 p.Info( mfg='Nexperia', pnum='74HC2G14GV,125', dk='1727-6046-1-ND' );
 p.Print( "packages/74HC2G14" );
 
-# Mounting hole
+# Mounting hole.  Designed for M2 thread.
+# will screw into spacer such as Wurth 9774015243R
 c = Part( ref='' );
-pi = PinInfo( pinW=mil(125), exact=True, plated=False );
+pi = PinInfo( pinW=mm(2.1), exact=True, plated=False );
 c.pins.append( Pin(-1, 0, 0, pi ));
+c.AddOutline( mm(4), 0, "CIRCLE" )
 c.Print( "packages/mh" );
 
 # SMT test point
