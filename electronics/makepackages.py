@@ -114,13 +114,12 @@ p = Part();
 p.InitFourSided( N=12, W=mm(5), L=mm(5), pitch=mm(1.27), pinW=mm(0.7), pinL=mm(0.65), rowD=mm(4.2), exact=True )
 
 # Reverse pin numbering
-for i in p.pins: 
-   i.X *= -1;
+for i in p.pins: i.X *= -1;
 
-# Fix outline so the pin 1 dot is in the right place
+# Add outline with the pin 1 dot is in the right place
 p.lines=[]
-p.AddOutline( H=mm(5), W=mm(5), type="BOX", dot=False )
-p.lines.append( Dot(p.pins[0].X + mm(1.5),p.pins[0].Y) );
+p.AddOutline( H=mm(5), W=mm(5), type="BOX", mirror=True )
+
 pi = PinInfo( pinW=mm(1), exact=True )
 p.pins.append( Pin( n=-1, x=mm(2.05-4.2/2), y=mm(4.2/2-1.24), info=pi ) )
 p.Info( pnum='MPRLS0001PG0000SA', mfg='Honeywell', dk='480-7100-1-ND' );
@@ -231,4 +230,12 @@ pi = PinInfo( pinW=mm(3), plated=0, exact=True )
 p.pins.append( Pin( n=-1, x=0, y=0, info=pi ) );
 p.Info( mfg='Wurth', pnum='9774015243R', dk='732-7069-1-ND' );
 p.Print( 'packages/spacer' );
+
+# BMP280 - Alternative pressure sensor
+#          Note that the pin numbers are mirror image from normal just like the MPR pressure sensor
+#          Don't know what the deal is with these sensors, but I've added support to it to my Footprint library!
+p = RectPart()
+p.Create( N=8, W=mm(2), L=mm(2.5), pitch=mm(.65), pinW=mm(.35), pinL=mm(0.5), rowD=mm(1.1+0.5), exact=True, outline="BOX", mirror=True )
+p.Info( pnum='BMP280', mfg='Bosch', dk='828-1064-1-ND' )
+p.Print( 'packages/BMP280' )
 
