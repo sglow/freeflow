@@ -26,11 +26,11 @@ def main():
    print 'Boot loader version: 0x%02x' % info[0]
 
    print 'Erasing flash'
-   if( not Erase( ser, pages=range(64) ) ):
+   if( not Erase( ser, pages=range(48) ) ):
       print 'Erase failed'
       return
 
-   elf = ElfFile( 'boot.elf' )
+   elf = ElfFile( 'main.elf' )
 
    for s in elf.seg:
       if( len(s.data) < 1 ): continue;

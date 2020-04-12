@@ -8,6 +8,11 @@
 #define CLOCK_RATE_MHZ  80
 #define CLOCK_RATE      (CLOCK_RATE_MHZ * 1000000)
 
+// Flash memory start/size
+#define FLASH_START        0x08000000
+#define FLASH_SIZE         0x00020000
+#define FLASH_PAGE_LEN     0x00000800
+
 // Interrupt vectors.  These are the offset of the interrupt in the 
 // vector table divided by 4
 // The interrupt vector table can be found in the reference manual 
@@ -269,6 +274,16 @@ typedef struct
    REG txData;
 } I2C_Regs;
 
+#define CRC_BASE                   0x40023000
+typedef struct
+{
+   REG data;
+   REG scratch;
+   REG ctrl;
+   REG init;
+   REG poly;
+} CRC_Regs;
+
 #define USBFS_BASE                 0x40006800
 
 // inline functions
@@ -355,28 +370,6 @@ static inline void GPIO_PullDn( uint32_t bank, int pin )
    gpio->pullUpDn = x;
 }
 
-
-static inline void IntDisable( void )
-{
-   asm volatile( "cpsid i" );
-}
-
-static inline void IntEnable( void )
-{
-   asm volatile( "cpsie i" );
-}
-
-static inline void IntRestore( int p )
-{
-   if( p ) IntEnable();
-}
-
-static inline int IntSuspend( void )
-{
-   int ret;
-   asm volatile( "mrs   %[output], primask\n\t" "cpsid i": [output] "=r" (ret) );
-   return (ret==0);
-}
 
 // Prototypes
 void CPU_Init( void );

@@ -1,9 +1,11 @@
 /* ui.c */
 
+#include "calc.h"
 #include "display.h"
 #include "encoder.h"
 #include "io.h"
 #include "loop.h"
+#include "pressure.h"
 #include "sprintf.h"
 #include "timer.h"
 #include "trace.h"
@@ -14,13 +16,17 @@ typedef void (*ScreenFunc)(void);
 
 // local functions
 static void SummaryScreen( void );
-static void ShowTvGraph( void );
+static void ShowPressureGraph( void );
+static void ShowFlowGraph( void );
+static void ShowDebug( void );
 
 // List of screen functions.
 static ScreenFunc screens[] =
 {
    SummaryScreen,
-   ShowTvGraph,
+   ShowPressureGraph,
+   ShowFlowGraph,
+   ShowDebug,
 };
 
 // local data
@@ -71,44 +77,87 @@ static void SummaryScreen( void )
    int dy = CrntFont()->yAdv;
    int y = 0;
 
-   sprintf( buff, "Tvol: %3d mL", 123 );
+   sprintf( buff, "Flow: % 3d ml/sec", (int)GetPressureFlowRate() );
    DrawString( buff, 0, y );
 
    y+= dy;
-   sprintf( buff, "PIP: %3d cmH2O", 25 );
-   DrawString( buff, 0, y );
-
-   y+= dy;
-   sprintf( buff, "Peep: %3d cmH2O", 17 );
+   sprintf( buff, "Pres: %4d cm", (int)(GetPressurePSI() * PRESSURE_CM_H2O) );
    DrawString( buff, 0, y );
 }
 
-static void ShowTvGraph( void )
+static void ShowPressureGraph( void )
 {
    SetFont( FONT_FREESANS_16 );
 
-   char buff[80];
-   sprintf( buff, "Tvol: %3d mL", 123 );
-
    int y = 0;
+
+   char buff[80];
+   sprintf( buff, "Pres: %4d cmH2O", (int)(GetPresAvg(200) * PRESSURE_CM_H2O) );
    DrawString( buff, 0, y );
 
    y += CrntFont()->yAdv + 4;
 
    int graphHeight = 64 - y;
 
-   int off = GetLoopCt() /10;
+   for( int i=0; i<128; i++ )
+   {
+      float p = GetPresHistory( i );
+      if( p < 0 ) p = 0;
+      if( p > 1 ) p = 1;
+
+      p *= (float)graphHeight;
+
+      SetPixel( i, 63 - p );
+   }
+}
+
+static void ShowFlowGraph( void )
+{
+   SetFont( FONT_FREESANS_16 );
+
+   int y = 0;
+
+   char buff[80];
+   sprintf( buff, "Flow: %3d ml/sec", (int)GetFlowAvg(200) );
+   DrawString( buff, 0, y );
+
+   y += CrntFont()->yAdv + 4;
+
+   int graphHeight = 64 - y;
 
    for( int i=0; i<128; i++ )
    {
-      int val = (i+off) & 127;
-      if( val >= 64 )
-         val = 128-val;
+      float f = GetFlowHistory( i );
+      if( f < 0 ) f = 0;
+      if( f > 1000 ) f = 1000;
 
-      val *= (float)graphHeight/64;
+      f *= (float)graphHeight / 1000.0;
 
-      SetPixel( i, val + y );
-      DbgTrace( 1, i, val+y );
+      SetPixel( i, 63 - f );
+   }
+}
+
+static const char *dbgStr[4];
+void AddDebugStr( const char *str )
+{
+   for( int i=2; i>=0; i-- )
+      dbgStr[i+1] = dbgStr[i];
+   dbgStr[0] = str;
+}
+
+static void ShowDebug( void )
+{
+   SetFont( FONT_FREESANS_12 );
+
+   // Find height of each row of text
+   int dy = CrntFont()->yAdv;
+   int y = 0;
+
+   for( int i=0; i<4; i++ )
+   {
+      if( dbgStr[i] )
+         DrawString( dbgStr[i], 0, y );
+      y += dy;
    }
 }
 

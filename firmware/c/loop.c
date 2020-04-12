@@ -70,7 +70,7 @@ void LoopISR( void )
    loopCt++;
 
    AdcRead();
-   PollPressure();
+   LoopPollPressure();
    UpdateCalculations();
 
    SaveTrace();

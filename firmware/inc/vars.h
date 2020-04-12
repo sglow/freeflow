@@ -36,6 +36,8 @@ typedef struct _VarInfo
 // Variable types
 #define VAR_TYPE_INT16          1
 #define VAR_TYPE_INT32          2
+#define VAR_TYPE_ARY16          3
+#define VAR_TYPE_ARY32          4
 
 // Flags passed to VarInit
 #define VAR_FLG_READONLY        0x01
@@ -54,6 +56,7 @@ typedef struct _VarInfo
 #define VARID_POFF1             10
 #define VARID_POFF2             11
 #define VARID_POFF_CALC         12
+#define VARID_PCAL              13
 
 #define VARID_MAX               50
 

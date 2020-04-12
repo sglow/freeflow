@@ -163,6 +163,14 @@ void UART_ISR( void )
 //      uint8_t dat = reg->data;
 //   }
 
+   // Check for over run error and clear it if set
+   // This can happen when erasing/writing flash because
+   // the processor stalls out waiting for code.
+   // I don't care too much, but need to clear the status
+   // bit because if I don't I'll keep getting interrupts.
+   if( reg->status & 0x0008 )
+      reg->intClear = 0x0008;
+
    // See if we received a new byte
    if( reg->status & 0x0020 )
    {

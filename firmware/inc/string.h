@@ -7,8 +7,10 @@
 
 void *memset( void *s, int c, int sz );
 void *memcpy( void *dest, const void *src, int n );
+void memcpy32( uint32_t *dest, uint32_t *src, int n );
 void *memmove( void *dest, const void *src, int n );
 int memcmp(const void *s1, const void *s2, int n);
+int memcmp32(const uint32_t *s1, const uint32_t *s2, int n);
 int strlen(const char *s);
 char *strcpy( char *dest, const char *src );
 char *strncpy( char *dest, const char *src, int n );

@@ -9,6 +9,7 @@
 #include "loop.h"
 #include "pressure.h"
 #include "sercmd.h"
+#include "store.h"
 #include "timer.h"
 #include "trace.h"
 #include "uart.h"
@@ -25,6 +26,7 @@ int main( void )
 
    // Init the processor and various modules
    CPU_Init();
+   StoreInit();
 GPIO_Output( DIGIO_A_BASE, 7, 0 );
    UART_Init();
    BuzzerInit();
@@ -48,6 +50,7 @@ GPIO_Output( DIGIO_A_BASE, 7, 0 );
       BuzzerPoll();
       PollIO();
       PollUserInteface();
+      BkgPollPressure();
    }
 }
 

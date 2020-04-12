@@ -9,6 +9,7 @@ import cmd;
 import glob;
 import os;
 import serial
+import struct
 import time
 import traceback
 
@@ -26,7 +27,7 @@ ESC  = 0xf2
 ser = serial.Serial( port='/dev/ttyUSB0', baudrate=115200 )
 ser.timeout = 0.8
 
-fwname = 'boot.elf'
+fwname = 'main.elf'
 
 varDict = {}
 
@@ -37,13 +38,6 @@ class VarInfo:
       self.fmt = fmt;
       self.type = type;
       varDict[name] = self;
-
-   def GetSize( self ):
-      if( self.type == 'u16' ): return 2;
-      if( self.type == 'i16' ): return 2;
-      if( self.type == 'u32' ): return 4;
-      if( self.type == 'i32' ): return 4;
-      raise Error( "Unknown type" )
 
    def IsSigned( self ):
       return not (self.type[0] == 'u' )
@@ -63,6 +57,7 @@ allVars = [
    VarInfo( 10, "pres_off1",     '%d',     'u32' ),
    VarInfo( 11, "pres_off2",     '%d',     'u32' ),
    VarInfo( 12, "poff_calc",     '%d',     'u16' ),
+   VarInfo( 13, "calibration",   '%d',     'ary32' ),
 ]
 
 # Names for trace variables.
@@ -408,10 +403,16 @@ def SetVar( var, value ):
             value = i
             break
 
-   if( v.GetSize() == 2 ):
+   if( v.type in ['u16', 'i16'] ):
       bval = Split16( value )
-   elif( v.GetSize() == 4 ):
+
+   elif( v.type in ['u32', 'i32'] ):
       bval = Split32( value );
+
+   elif( v.type == 'ary32' ):
+      value = [int(x,0) for x in value.split(',')]
+      bval = Split32( value )
+
    else:
       print "Sorry, can't handle this one"
       return
@@ -550,6 +551,14 @@ def SendCmd( op, data=[] ):
       print "Error %d (0x%02x)" % (rsp[0],rsp[0]);
       return []
    return rsp[2:]
+
+def I2F( ival ):
+   s = struct.pack( 'I',ival&0xffffffff );
+   return struct.unpack('f',s)[0]
+
+def F2I( fval ):
+   s = struct.pack( 'f',fval );
+   return struct.unpack('I',s)[0]
 
 def SplitInt( val, len=4, le=True, asStr=False ):
    ret = [];

@@ -1,8 +1,10 @@
 /* pressure.c */
 
 #include "cpu.h"
+#include "errors.h"
 #include "loop.h"
 #include "pressure.h"
+#include "store.h"
 #include "timer.h"
 #include "trace.h"
 #include "utils.h"
@@ -26,9 +28,16 @@
 #define STATE_READ2H       3     // Waiting for high byte from sensor 2
 #define STATE_READ2L       4     // Waiting for low byte from sensor 2
 
+// Various local flags
+#define FLG_NEW_READING    0x0001
+#define FLG_SAVE_POFF      0x0002
+
+#define CAL_POINTS         20
+
 // local functions
 static void SelectSensor( int which );
 static int SetOffsetTime( VarInfo *info, uint8_t *buff, int len );
+static int SetCalData( VarInfo *info, uint8_t *buff, int len );
 
 // local data
 static uint16_t isrLastRead;
@@ -39,10 +48,13 @@ static uint32_t lastPressureRead;
 static VarInfo varPressure[2];
 static VarInfo varPoffset[2];
 static VarInfo varOffCalc;
+static VarInfo varPresCal;
 static uint32_t pOff[2];
 static uint32_t offSum[2];
+static uint32_t flags;
 static uint16_t offCalcTime;
 static uint16_t offCalcCount;
+static int32_t calData[CAL_POINTS];
 
 void InitPressure( void )
 {
@@ -52,7 +64,10 @@ void InitPressure( void )
    VarInit( &varPoffset[0],  VARID_POFF1,       "poff1",     VAR_TYPE_INT32, &pOff[0], 0 );
    VarInit( &varPoffset[1],  VARID_POFF2,       "poff2",     VAR_TYPE_INT32, &pOff[1], 0 );
    VarInit( &varOffCalc,     VARID_POFF_CALC,   "poffcalc",  VAR_TYPE_INT16, &offCalcTime, 0 );
+   VarInit( &varPresCal,     VARID_PCAL,        "prescal",   VAR_TYPE_ARY32, &calData, 0 );
+
    varOffCalc.set = SetOffsetTime;
+   varPresCal.set = SetCalData;
 
    // Configure the pins for SPI use
    GPIO_PinAltFunc( DIGIO_A_BASE, 6, 5 );
@@ -81,6 +96,12 @@ void InitPressure( void )
    spi->ctrl[0] = 0x0374;
 
    EnableInterrupt( INT_VECT_SPI1, 3 );
+
+   for( int i=0; i<2; i++ )
+      pOff[i] = FindStore()->pOff[i];
+
+   for( int i=0; i<CAL_POINTS; i++ )
+      calData[i] = FindStore()->pcal[i];
 }
 
 int16_t GetPressure1( void )
@@ -98,29 +119,37 @@ int16_t GetPressureDiff16( void )
    return Clip16( (padj[1]-padj[0])>>8 );
 }
 
+float GetPressurePSI( void )
+{
+   // I believe the pressure sensor range is 0 to 1 PSI over 10% to 90%
+   // of the count range (2^24).  That is, 10% of 2^24 would be 0 psi and
+   // 90% of 2^24 would be 1PSI.
+   //
+   // I zero adjust the readings, so to get PSI I just scale the adjusted
+   // value by 80% of 2^24.
+   return padj[0] / (0x01000000*.8);
+}
+
+/*
 static const int32_t calData[] =
 {
-     47393,       // 100
-    171011,       // 200
-    366416,       // 300
-    636238,       // 400
-    994108,       // 500
-   1420935,       // 600
-   1897852,       // 700
-   2441713,       // 800
-   2889541,       // 900
-   3213755,       // 1000
-   3570770,       // 1100
-   3963378,       // 1200
-   4398388,       // 1300
-   4849933,       // 1400
-   5188297,       // 1500
-   5623387,       // 1600
-   5983148,       // 1700
-   6359482,       // 1800
-   6612908,       // 1900
-   6673088,       // 2000
+     11834,           // 100
+     44079,           // 200
+     95932,           // 300
+    168308,           // 400
+    261033,           // 500
+    374397,           // 600
+    511040,           // 700
+    669814,           // 800
+    840659,           // 900
+   1029393,           // 1000
+   1270340,           // 1100
+   1518120,           // 1200
+   1770262,           // 1300
+   2072881,           // 1400
+   2389831,           // 1500
 };
+*/
 
 // Return calibrated flow rate in cc/sec units
 float GetPressureFlowRate( void )
@@ -140,7 +169,7 @@ float GetPressureFlowRate( void )
       prev = calData[i];
    }
 
-   return 2000;
+   return 100 * ARRAY_CT(calData);
 }
 
 int16_t TracePressureFlowRate( void )
@@ -148,12 +177,40 @@ int16_t TracePressureFlowRate( void )
    return GetPressureFlowRate();
 }
 
+// This is called by the low priority background task
+void BkgPollPressure( void )
+{
+   if( flags & FLG_SAVE_POFF )
+   {
+      BitClr( FLG_SAVE_POFF, &flags );
+      StoreUpdt( pOff, pOff, sizeof(pOff) );
+   }
+}
+
 // This is called from the high priority loop every cycle.
 // It manages reading pressure data from the sensors
-void PollPressure( void )
+void LoopPollPressure( void )
 {
-   uint32_t now = GetLoopCt();
+   if( flags & FLG_NEW_READING )
+   {
+      BitClr( FLG_NEW_READING, &flags );
 
+      if( offCalcTime )
+      {
+         offSum[0] += praw[0];
+         offSum[1] += praw[1];
+         offCalcCount++;
+         offCalcTime--;
+         if( !offCalcTime )
+         {
+            pOff[0] = offSum[0] / offCalcCount;
+            pOff[1] = offSum[1] / offCalcCount;
+            BitSet( FLG_SAVE_POFF, &flags );
+         }
+      }
+   }
+
+   uint32_t now = GetLoopCt();
    if( LoopsSince( lastPressureRead ) < MsToLoop(5) )
       return;
 
@@ -207,20 +264,7 @@ void SPI1_ISR( void )
          praw[1] = 0x00FFFFFF & ((((uint32_t)isrLastRead)<<16) | value);
          padj[1] = praw[1] - pOff[1];
          pressureState = STATE_IDLE;
-
-         if( offCalcTime )
-         {
-            offSum[0] += praw[0];
-            offSum[1] += praw[1];
-            offCalcCount++;
-            offCalcTime--;
-            if( !offCalcTime )
-            {
-               pOff[0] = offSum[0] / offCalcCount;
-               pOff[1] = offSum[1] / offCalcCount;
-            }
-         }
-
+         flags |= FLG_NEW_READING;
          return;
    }
 }
@@ -256,6 +300,21 @@ static int SetOffsetTime( VarInfo *info, uint8_t *buff, int len )
    offSum[1] = 0;
    offCalcCount = 0;
    IntEnable();
+
+   return 0;
+}
+
+// Set the calibration data for the pressure difference.
+// I expect 20 x 32-bit integers, so 80 bytes of data
+static int SetCalData( VarInfo *info, uint8_t *buff, int len )
+{
+   if( len < 4*CAL_POINTS )
+      return ERR_MISSING_DATA;
+
+   for( int i=0; i<CAL_POINTS; i++ )
+      calData[i] = b2u32( &buff[4*i] );
+
+   StoreUpdt( pcal, calData, 4*CAL_POINTS );
 
    return 0;
 }

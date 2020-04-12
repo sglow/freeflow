@@ -6,6 +6,7 @@
 #include "loop.h"
 #include "pressure.h"
 #include "uart.h"
+#include "utils.h"
 
 // global data
 uint32_t mainStack[400];
@@ -32,6 +33,12 @@ void CPU_Init( void )
    SysCtrl_Reg *sysCtl = (SysCtrl_Reg *)SYSCTL_BASE;
    sysCtl->cpac = 0x00F00000;
 
+   // Enable clocks to peripherials I use
+   rcc->periphClkEna[0] = 0x00001101;  // Flash, DMA1, CRC
+   rcc->periphClkEna[1] = 0x00002007;  // GPIO, ADC
+   rcc->periphClkEna[4] = 0x40200001;  // Opamp, Timer 2, I2C1
+   rcc->periphClkEna[6] = 0x00035800;  // UART1, Timers 1, 15, 16, SPI1
+
    // Reset caches and set latency for 80MHz opperation
    FlashReg *flash = (FlashReg *)FLASH_BASE;
    flash->access = 0x00000004;
@@ -39,11 +46,6 @@ void CPU_Init( void )
    flash->access = 0x00001804;
    flash->access = 0x00000604;
 
-   // Enable clocks to peripherials I use
-   rcc->periphClkEna[0] = 0x00000101;  // Flash, DMA1
-   rcc->periphClkEna[1] = 0x00002007;  // GPIO, ADC
-   rcc->periphClkEna[4] = 0x40200001;  // Opamp, Timer 2, I2C1
-   rcc->periphClkEna[6] = 0x00035800;  // UART1, Timers 1, 15, 16, SPI1
 
    // Fin = 4MHz
    // Fvco = Fin * (N/M)

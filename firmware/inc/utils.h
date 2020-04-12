@@ -5,6 +5,32 @@
 
 #include <stdint.h>
 
+#ifndef offsetof
+#define offsetof(type,member)   (int)(&((type*)0)->member)
+#endif
+
+static inline void IntDisable( void )
+{
+   asm volatile( "cpsid i" );
+}
+
+static inline void IntEnable( void )
+{
+   asm volatile( "cpsie i" );
+}
+
+static inline void IntRestore( int p )
+{
+   if( p ) IntEnable();
+}
+
+static inline int IntSuspend( void )
+{
+   int ret;
+   asm volatile( "mrs   %[output], primask\n\t" "cpsid i": [output] "=r" (ret) );
+   return (ret==0);
+}
+
 static inline int16_t Clip16( int32_t val )
 {
    int ret;
@@ -48,6 +74,21 @@ static inline void u32_2_u8( uint32_t val, uint8_t ret[] )
    ret[2] = val>>16;
    ret[3] = val>>24;
 }
+
+static inline void BitSet( uint32_t bit, uint32_t *var )
+{
+   IntDisable();
+   *var |= bit;
+   IntEnable();
+}
+
+static inline void BitClr( uint32_t bit, uint32_t *var )
+{
+   IntDisable();
+   *var &= ~bit;
+   IntEnable();
+}
+
 
 #define ARRAY_CT(x)      (sizeof(x)/sizeof(x[0]))
 

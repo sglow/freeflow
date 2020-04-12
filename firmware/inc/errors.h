@@ -13,5 +13,7 @@
 #define ERR_ALREADY_DEFINED   7       // Variable is already defined
 #define ERR_UNKNOWN_VAR       8       // Variable isn't defined
 #define ERR_READ_ONLY         9       // Variable is read only
+#define ERR_FLASH             10      // Error erasing / programming flash
+#define ERR_VERIFY            11      // Verify error checking storage block
 
 #endif

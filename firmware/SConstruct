@@ -3,12 +3,11 @@ import os;
 import struct;
 import crc32
 import time
-from elffile import ElfFile;
 
 def main():
    mainsrc = Split( 'main.c cpu.c uart.c sercmd.c ascii.c string.c binary.c buzzer.c encoder.c ' +
                     'io.c timer.c loop.c adc.c trace.c vars.c pressure.c display.c sprintf.c ui.c ' +
-                    'calc.c');
+                    'calc.c store.c flash.c');
    asmsrc = Split( 'startup.s' )
 
    prefix = 'arm-none-eabi'
@@ -28,7 +27,7 @@ def main():
    env['ASCOMSTR'] = '***** Assembling $TARGET'
    env['LINKCOMSTR'] = '***** Linking $TARGET'
 
-   BuildFirmware( env, 'boot', mainsrc, asmsrc, flags='-D BOOT',  link='boot.x' )
+#   BuildFirmware( env, 'boot', mainsrc, asmsrc, flags='-D BOOT',  link='boot.x' )
    BuildFirmware( env, 'main', mainsrc, asmsrc, flags='',  link='main.x' )
 
 def BuildFirmware( env, name, srcList, asmList, flags='', link='linker.x' ):

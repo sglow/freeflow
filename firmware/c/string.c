@@ -18,6 +18,13 @@ void *memcpy( void *dest, const void *src, int n )
    return dest;
 }
 
+// Copys N 32-bit values
+void memcpy32( uint32_t *dest, uint32_t *src, int n )
+{
+   for( int i=0; i<n; i++ )
+      *dest++ = *src++;
+}
+
 // Just like memcpy, but buffers can overlap
 void *memmove( void *dest, const void *src, int n )
 {
@@ -43,6 +50,16 @@ int memcmp(const void *s1, const void *s2, int n)
    for( int i=0; i<n; i++ )
    {
       int diff = *p1++ - *p2++;
+      if( diff ) return diff;
+   }
+   return 0;
+}
+
+int memcmp32(const uint32_t *s1, const uint32_t *s2, int n)
+{
+   for( int i=0; i<n; i++ )
+   {
+      int diff = *s1++ - *s2++;
       if( diff ) return diff;
    }
    return 0;
