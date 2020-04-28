@@ -17,6 +17,8 @@ From RMVS challenge document:
   have a maximum flow rate of 60 to 120 L/min.
   That would be 1000 to 2000 ml/sec
 
+  Max pressures are in the 40cmH2O region
+
   I found a calculator to calculate TV based on patient size.
   https://www.mdcalc.com/endotracheal-tube-ett-depth-tidal-volume-calculator
 
@@ -27,3 +29,5 @@ From RMVS challenge document:
   5' female: 276 - 368
   4' female: same as 5'
 
+
+Important display, pressure on x-axis, tidal volume on y
