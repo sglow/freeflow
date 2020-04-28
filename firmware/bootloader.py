@@ -15,6 +15,10 @@ parser.add_option( "--verbose", dest="verbose", help='Get chatty', default=False
 
 
 def main():
+   elfFile = 'mini.elf'
+   if( len(args) ):
+      elfFile = args[0]
+
    ser = serial.Serial( port=options.port, baudrate=options.baud, parity='E' )
    ser.timeout = 0.5
 
@@ -30,7 +34,7 @@ def main():
       print 'Erase failed'
       return
 
-   elf = ElfFile( 'main.elf' )
+   elf = ElfFile( elfFile )
 
    for s in elf.seg:
       if( len(s.data) < 1 ): continue;

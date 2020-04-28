@@ -57,6 +57,7 @@ typedef struct _VarInfo
 #define VARID_POFF2             11
 #define VARID_POFF_CALC         12
 #define VARID_PCAL              13
+#define VARID_DIFF_PRES         14
 
 #define VARID_MAX               50
 

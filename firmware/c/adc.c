@@ -2,6 +2,8 @@
 
 #include "adc.h"
 #include "cpu.h"
+#include "main.h"
+#include "store.h"
 #include "timer.h"
 #include "trace.h"
 #include "utils.h"
@@ -10,14 +12,14 @@
 // local data
 static uint16_t pressure;
 static uint16_t batVolt;
+static VarInfo varDPres;
 
-static uint16_t calData[9];
 void AdcInit( void )
 {
    ADC_Regs *adc = (ADC_Regs *)ADC_BASE;
 
    // Configure the two pins that I'm using as analog inputs
-   // PA0 (ADC1_IN5 ) (differential pressure sensor)
+   // PA0 (ADC1_IN5 ) (differential pressure sensor) - rev1 board only, now obsolete
    // PA2 (ADC12_IN7) (input voltage)
    // PA3 (ADC12_IN8) (opamp output)
    //
@@ -68,7 +70,8 @@ void AdcInit( void )
    adc->adc[0].cfg[0] = 0x00000000;
    adc->adc[1].cfg[0] = 0x00000000;
 
-   // Setup oversampling mode (TBD)
+   // Setup oversampling mode to 256x oversample with a 4 bit right shift.
+   // That should give me a 16 bit results
    adc->adc[0].cfg[1] = 0x0000009d;
    adc->adc[1].cfg[1] = 0x00000000;
 
@@ -83,17 +86,7 @@ void AdcInit( void )
    adc->adc[0].seq[0] = 5 << 6;
    adc->adc[1].seq[0] = 7 << 6;
 
-   // OPARANGE needs to be 1
-
-   calData[0] = 14300; //    0 mL / sec
-   calData[1] = 15532; //  200 mL / sec
-   calData[2] = 18878; //  400 mL / sec
-   calData[3] = 24290; //  600 mL / sec
-   calData[4] = 32064; //  800 mL / sec
-   calData[5] = 41230; // 1000 mL / sec
-   calData[6] = 52639; // 1200 mL / sec
-   calData[7] = 63640; // 1400 mL / sec
-   calData[8] = 65535; // 1600 mL / sec
+   VarInit( &varDPres, VARID_DIFF_PRES, "diff_pres", VAR_TYPE_INT16, &pressure, VAR_FLG_READONLY );
 }
 
 // Read the two A/D inputs 
@@ -110,31 +103,7 @@ void AdcRead( void )
    adc->adc[1].ctrl  |= 4;
 }
 
-uint16_t GetDiffPressure( void )
-{
-   return pressure;
-}
-
-uint16_t GetDPcal( void )
-{
-   if( pressure < calData[0] )
-      return 0;
-
-   for( int i=1; i<ARRAY_CT(calData); i++ )
-   {
-      if( pressure > calData[i] )
-         continue;
-
-      int N = pressure - calData[i-1];
-      int D = calData[i] - calData[i-1];
-
-      return (i-1)*200 + 200*N / D;
-   }
-   return 1600;
-}
-
-uint16_t GetBatVolt( void )
+float GetBatVolt( void )
 {
    return batVolt;
 }
-

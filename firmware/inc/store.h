@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <utils.h>
 
+#define CAL_POINTS         20
+
 // This structure layout of the non-volatile parameter info
 // stored in flash.
 // The structure must be exactly 512 bytes long.
@@ -16,9 +18,9 @@ typedef struct
    uint8_t  mark;           // Used to corrupt old blocks
    uint16_t info;           // Bit-mapped info about block.  Currently just 0 (for future use)
 
-   uint32_t pOff[2];        // Pressure sensor offsets
-   uint32_t pcal[20];       // Pressure difference calibration
-   uint32_t rsvd[40];       // Reserved for future use.
+   uint32_t pOff[2];            // Pressure sensor offsets
+   float    pcal[CAL_POINTS];   // Pressure difference calibration
+   uint32_t rsvd[40];           // Reserved for future use.
 } StoreData;
 
 // prototypes

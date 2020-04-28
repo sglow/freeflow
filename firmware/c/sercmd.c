@@ -20,6 +20,7 @@
 #include "sercmd.h"
 #include "string.h"
 #include "uart.h"
+#include "usb.h"
 #include "utils.h"
 
 // Special binary mode bytes
@@ -37,35 +38,70 @@
 #define STATE_SEND_ASCII_RSP    3
 #define STATE_SEND_BINARY_RSP   4
 
-// local data
-static uint8_t cmdBuff[200];
-static int8_t state;
-static uint8_t flag;
-static int16_t cmdNdx;
-static int16_t rspLen;
+void InitSerCmd( SerCmdInfo *info, int usb )
+{
+   info->usb    = usb;
+   info->state  = 0;
+   info->flag   = 0;
+   info->cmdNdx = 0;
+   info->rspLen = 0;
+}
+
+static inline int SendByte( SerCmdInfo *info, uint8_t ch )
+{
+   if( info->usb )
+      return USB_SendByte( ESC );
+   else
+      return UART_SendByte( ch );
+}
+
+static inline int SendData( SerCmdInfo *info, uint8_t *data, int len )
+{
+   if( info->usb )
+      return USB_Send( data, len );
+   else
+      return UART_Send( data, len );
+}
+
+static inline int RecvByte( SerCmdInfo *info )
+{
+   if( info->usb )
+      return USB_Recv();
+   else
+      return UART_Recv();
+}
+
+static inline int TxFree( SerCmdInfo *info, uint8_t ch )
+{
+   if( info->usb )
+      return USB_TxFree();
+   else
+      return UART_TxFree();
+}
+
 
 // This function is constantly called from the background task.
 // It reads bytes from the UART and detects the end of a command.
 // When a new command has been received, it passes it to the command
 // processor and then sends the response back out the UART
-void PollSerCmd( void )
+void PollSerCmd( SerCmdInfo *info )
 {
 // temp
-flag |= FLG_BINARY;
-   switch( state )
+info->flag |= FLG_BINARY;
+   switch( info->state )
    {
       // Start of a new command.
       // In ASCII mode we discard any white space at the start of a command.
       // In binary mode we just jump to the next state
       case START_NEW_CMD:
-         cmdNdx = 0;
-         if( flag & FLG_BINARY )
-            state = STATE_WAIT_BINARY;
+         info->cmdNdx = 0;
+         if( info->flag & FLG_BINARY )
+            info->state = STATE_WAIT_BINARY;
          else
          {
             // Read the next character.  This will be -1 if there
             // aren't any new characters available
-            int ch = UART_Recv();
+            int ch = RecvByte( info );
             if( ch < 0 )
                return;
 
@@ -75,9 +111,9 @@ flag |= FLG_BINARY;
 
             // For non white space, add to my command buffer
             // and move on to the next state
-            cmdBuff[0] = ch;
-            cmdNdx = 1;
-            state = STATE_WAIT_ASCII;
+            info->buff[0] = ch;
+            info->cmdNdx = 1;
+            info->state = STATE_WAIT_ASCII;
          }
          return;
 
@@ -85,21 +121,21 @@ flag |= FLG_BINARY;
       // ASCII mode
       case STATE_WAIT_ASCII:
       {
-         int ch = UART_Recv();
+         int ch = RecvByte( info );
          if( ch < 0 ) return;
 
          if( strchr( "\n\r", ch ) )
          {
-            cmdBuff[ cmdNdx ] = 0;
+            info->buff[ info->cmdNdx ] = 0;
 
-            rspLen = ProcessAsciiCmd( (char*)cmdBuff, sizeof(cmdBuff) );
-            cmdNdx = 0;
-            state = STATE_SEND_ASCII_RSP;
+            info->rspLen = ProcessAsciiCmd( (char*)info->buff, sizeof(info->buff) );
+            info->cmdNdx = 0;
+            info->state = STATE_SEND_ASCII_RSP;
             return;
          }
 
-         if( cmdNdx < sizeof(cmdBuff) )
-            cmdBuff[ cmdNdx++ ] = ch;
+         if( info->cmdNdx < sizeof(info->buff) )
+            info->buff[ info->cmdNdx++ ] = ch;
          return;
       }
 
@@ -108,26 +144,26 @@ flag |= FLG_BINARY;
       {
          // Add as many bytes as possible to the UART 
          // transmit buffer
-         int ct = UART_Send( &cmdBuff[ cmdNdx ], rspLen );
-         rspLen -= ct;
-         cmdNdx += ct;
-         if( !rspLen )
-            state = START_NEW_CMD;
+         int ct = SendData( info, &info->buff[ info->cmdNdx ], info->rspLen );
+         info->rspLen -= ct;
+         info->cmdNdx += ct;
+         if( !info->rspLen )
+            info->state = START_NEW_CMD;
          return;
       }
 
       case STATE_WAIT_BINARY:
       {
-         int ch = UART_Recv();
+         int ch = RecvByte( info );
          if( ch < 0 ) return;
 
          // If the previous character received was an escape character
          // then just save this byte (assuming there's space)
-         if( flag & FLG_ESC )
+         if( info->flag & FLG_ESC )
          {
-            flag &= ~FLG_ESC;
-            if( cmdNdx < sizeof(cmdBuff) )
-               cmdBuff[ cmdNdx++ ] = ch;
+            info->flag &= ~FLG_ESC;
+            if( info->cmdNdx < sizeof(info->buff) )
+               info->buff[ info->cmdNdx++ ] = ch;
             return;
          }
 
@@ -135,7 +171,7 @@ flag |= FLG_BINARY;
          // just keep track of the fact that we saw it.
          if( ch == ESC )
          {
-            flag |= FLG_ESC;
+            info->flag |= FLG_ESC;
             return;
          }
 
@@ -143,16 +179,16 @@ flag |= FLG_BINARY;
          // then process the command
          if( ch == EOC )
          {
-            rspLen = ProcessBinaryCmd( cmdBuff, cmdNdx, sizeof(cmdBuff) );
-            cmdNdx = 0;
-            state = STATE_SEND_BINARY_RSP;
+            info->rspLen = ProcessBinaryCmd( info->buff, info->cmdNdx, sizeof(info->buff) );
+            info->cmdNdx = 0;
+            info->state = STATE_SEND_BINARY_RSP;
             return;
          }
 
          // For other boring characters, just save them 
          // if there's space in my buffer
-         if( cmdNdx < sizeof(cmdBuff) )
-            cmdBuff[ cmdNdx++ ] = ch;
+         if( info->cmdNdx < sizeof(info->buff) )
+            info->buff[ info->cmdNdx++ ] = ch;
          return;
       }
 
@@ -161,15 +197,15 @@ flag |= FLG_BINARY;
 
          // If there's no data left to send, then just send the
          // EOC character and start waiting for the next command
-         if( !rspLen )
+         if( !info->rspLen )
          {
-            if( UART_SendByte( EOC ) )
-               state = START_NEW_CMD;
+            if( SendByte( info, EOC ) )
+               info->state = START_NEW_CMD;
             return;
          }
 
          // See what the next character to send is.
-         int ch = cmdBuff[ cmdNdx ];
+         int ch = info->buff[ info->cmdNdx ];
 
          // If it's a special character, I need to escape it.
          // I'll only do that if there are at least two spots 
@@ -178,19 +214,19 @@ flag |= FLG_BINARY;
          {
             if( UART_TxFree() >= 2 )
             {
-               UART_SendByte( ESC );
-               UART_SendByte( ch );
-               cmdNdx++;
-               rspLen--;
+               SendByte( info, ESC );
+               SendByte( info, ch );
+               info->cmdNdx++;
+               info->rspLen--;
             }
             return;
          } 
 
          // Otherwise, just send the byte
-         if( UART_SendByte( ch ) )
+         if( SendByte( info, ch ) )
          {
-            rspLen--;
-            cmdNdx++;
+            info->rspLen--;
+            info->cmdNdx++;
          }
          return;
    }

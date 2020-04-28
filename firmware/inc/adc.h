@@ -8,8 +8,8 @@
 // prototypes
 void AdcInit( void );
 void AdcRead( void );
-uint16_t GetDiffPressure( void );
-uint16_t GetBatVolt( void );
-uint16_t GetDPcal( void );
+//uint16_t GetDiffPressure( void );
+float GetBatVolt( void );
+//uint16_t GetDPcal( void );
 
 #endif

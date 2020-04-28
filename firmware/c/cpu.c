@@ -36,7 +36,7 @@ void CPU_Init( void )
    // Enable clocks to peripherials I use
    rcc->periphClkEna[0] = 0x00001101;  // Flash, DMA1, CRC
    rcc->periphClkEna[1] = 0x00002007;  // GPIO, ADC
-   rcc->periphClkEna[4] = 0x40200001;  // Opamp, Timer 2, I2C1
+   rcc->periphClkEna[4] = 0x15200001;  // Timer 2, I2C1, USB, CRS, Power
    rcc->periphClkEna[6] = 0x00035800;  // UART1, Timers 1, 15, 16, SPI1
 
    // Reset caches and set latency for 80MHz opperation
@@ -46,6 +46,8 @@ void CPU_Init( void )
    flash->access = 0x00001804;
    flash->access = 0x00000604;
 
+   // Turn on the HSI48 clock used for USB
+   rcc->recovery = 1;
 
    // Fin = 4MHz
    // Fvco = Fin * (N/M)
@@ -68,10 +70,15 @@ void CPU_Init( void )
    // Route the HSI16 clock to I2C1.
    // Mostly because I'm too lazy to figure out the complex timing
    // register settings for the i2c peripherial for a clock frequency
-   // that's not given as an example in the reference manual!
+   // that's not given as an example in the reference manual.
    rcc->indClkCfg = 0x00002000;
 
-IntEnable();
+   // Turn on power to the USB module
+   PwrCtrl_Reg *pwr = (PwrCtrl_Reg *)POWER_BASE;
+   pwr->ctrl[1] = 0x00000410;
+
+   // Enable interrupts
+   IntEnable();
 }
 
 // Enable an interrupt with a specified priority (0 to 15)

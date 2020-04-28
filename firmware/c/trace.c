@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include "adc.h"
+#include "autooffset.h"
 #include "errors.h"
 #include "pressure.h"
 #include "timer.h"
@@ -41,15 +42,11 @@
 #define CTRL_RESERVED       0xFFFC
 
 // local functions
-static uint16_t GetDbg0( void ){ return dbgUInt[0]; }
-static uint16_t GetDbg1( void ){ return dbgUInt[1]; }
-static uint16_t GetDbg2( void ){ return dbgUInt[2]; }
-static uint16_t GetDbg3( void ){ return dbgUInt[3]; }
 static int SetCtrl( VarInfo *info, uint8_t *buff, int len );
 
 // Trace data is located at a fixed memory location
-#define TRACE_DATA_ADDR 0x20008000
-#define TRACE_DATA_LEN  0x00002000
+#define TRACE_DATA_ADDR 0x20006000
+#define TRACE_DATA_LEN  0x00004000
 
 // local data
 static uint16_t varID[4];
@@ -61,25 +58,29 @@ static uint16_t dbgTraceTime;
 static VarInfo varCtrl, varPeriod, varSamples;
 static VarInfo varTraceVar[4];
 
+static float GetDbgFlt0( void ){ return dbgFlt[0]; }
+static float GetDbgFlt1( void ){ return dbgFlt[1]; }
+
 // Each trace variable has a function associated with it.
 // that function is called in the high priority loop to sample
 // the trace variable when it's being traced.
 // The array below associates these functions with the variable IDs
-typedef uint16_t (*traceFunc)(void);
+// The data these functions returns is a 32-bit value that will be copied
+// to trace memory.  It could be signed, unsigned or float.  It's up to 
+// the interface program to know how to interpret it.
+typedef float (*traceFunc)(void);
 static traceFunc traceVarFunc[] =
 {
-   0,                       // 0 None - trace variable ID 0 means nothing is sampled
-   GetDbg0,                 // 1 dbgInt[0] - These are fixed locations at the start of RAM
-   GetDbg1,                 // 2 dbgInt[1]   which can be used for debugging purposes.
-   GetDbg2,                 // 3 dbgInt[2]   Just add code to put the data of interest in these
-   GetDbg3,                 // 4 dbgInt[3]   locations and they can be sampled in real time.
-   GetDiffPressure,         // 5 Differential pressure reading
-   GetBatVolt,              // 6 Battery voltage
-   GetDPcal,                // 7 Calibrated differential pressure
-   (traceFunc)GetPressure1,            // 8 Gauge pressure sensor 1
-   (traceFunc)GetPressure2,            // 9 Gauge pressure sensor 2
-   (traceFunc)GetPressureDiff16,       // 10 Difference between pressure sensors
-   (traceFunc)TracePressureFlowRate,   // 11 Calibrated flow rate (cc/sec)
+   0,                     //  0 None - trace variable ID 0 means nothing is sampled
+   GetBatVolt,            //  1 Battery voltage
+   GetPressure1,          //  2 Gauge pressure sensor 1
+   GetPressure2,          //  3 Gauge pressure sensor 2
+   GetPressureDiff,       //  4 Difference between pressure sensors
+   GetFlowRate,           //  5 Calibrated flow rate (cc/sec)
+   GetPresFilt1,          //  6 Low pass filtered pressure reading
+   GetPresFilt2,          //  7 Low pass filtered pressure reading
+   GetDbgFlt0,   
+   GetDbgFlt1,   
 };
 
 
@@ -112,9 +113,9 @@ void SaveTrace( void )
 
    pct = 0;
 
-   uint16_t *traceData = (uint16_t *)TRACE_DATA_ADDR;
+   float *traceData = (float *)TRACE_DATA_ADDR;
 
-   // Save our trace variables to the buffer
+   // Save our trace data to the buffer
    for( int i=0; i<4; i++ )
    {
       // I quit when I see an invalid variable ID
@@ -123,14 +124,14 @@ void SaveTrace( void )
 
       // At this point, the variable ID values should have been vetted so I assume they're 
       // all valid.  Call the function to get the value to save
-      uint16_t value = traceVarFunc[ varID[i] ]();
+      float value = traceVarFunc[ varID[i] ]();
 
       // Save this to my trace data array
       traceData[ samples++ ] = value;
    }
 
-   // If we can't store at least 4 more words to the array, quit now
-   if( samples > TRACE_DATA_LEN/sizeof(uint16_t) - 4 )
+   // If we can't store at least 4 more samples to the array, quit now
+   if( samples > TRACE_DATA_LEN/sizeof(uint32_t) - 4 )
       ctrl &= ~CTRL_RUNNING;
 }
 
@@ -189,6 +190,12 @@ void DbgTrace( uint16_t a, uint16_t b, uint16_t c )
    if( !(ctrl & CTRL_DEBUG_TRACE) )
       return;
 
+   if( samples >= TRACE_DATA_LEN/(4*sizeof(uint16_t))-4 )
+   {
+      ctrl = 0;
+      return;
+   }
+
    uint16_t *traceData = (uint16_t *)TRACE_DATA_ADDR;
    uint16_t now = TimerGetUsec();
 
@@ -198,12 +205,6 @@ void DbgTrace( uint16_t a, uint16_t b, uint16_t c )
    traceData[ samples++ ] = c;
 
    dbgTraceTime = now;
-
-   if( samples >= TRACE_DATA_LEN/(4*sizeof(uint16_t)) )
-   {
-      ctrl = 0;
-      return;
-   }
 }
 
 void DbgTraceL( uint16_t a, uint32_t b )

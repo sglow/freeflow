@@ -18,8 +18,8 @@ static float presSum, flowSum;
 void UpdateCalculations( void )
 {
    // Every cycle I'll update my history info
-   presSum += GetPressurePSI();
-   flowSum += GetPressureFlowRate();
+   presSum += GetPressure1();
+   flowSum += GetFlowRate();
    if( ++histCt >= MS_PER_HIST_SAMP )
    {
       histNdx = (histNdx+1) & (HIST_LEN-1);

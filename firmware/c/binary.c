@@ -3,6 +3,7 @@
 #include "binary.h"
 #include "errors.h"
 #include "string.h"
+#include "trace.h"
 #include "utils.h"
 #include "vars.h"
 

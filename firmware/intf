@@ -2,6 +2,7 @@
 
 # Very simple command line interface for development
 
+import sys
 import matplotlib;
 import matplotlib.pyplot as plt;
 import math;
@@ -24,10 +25,16 @@ OP_SET     = 4
 TERM = 0xf1
 ESC  = 0xf2
 
-ser = serial.Serial( port='/dev/ttyUSB0', baudrate=115200 )
+port = '/dev/ttyUSB0'
+if( len(sys.argv) > 1 ):
+   port = sys.argv[1]
+
+print 'Opening port %s' % port
+
+ser = serial.Serial( port=port, baudrate=115200 )
 ser.timeout = 0.8
 
-fwname = 'main.elf'
+fwname = 'mini.elf'
 
 varDict = {}
 
@@ -57,27 +64,60 @@ allVars = [
    VarInfo( 10, "pres_off1",     '%d',     'u32' ),
    VarInfo( 11, "pres_off2",     '%d',     'u32' ),
    VarInfo( 12, "poff_calc",     '%d',     'u16' ),
-   VarInfo( 13, "calibration",   '%d',     'ary32' ),
+   VarInfo( 13, "calibration",   '%.4f',     'aryflt' ),
+   VarInfo( 14, "diff_pres",     '%d',     'i16' ),
 ]
 
-# Names for trace variables.
-# These map to a list containing:
-#  ID, signed/unsigned info
-traceVars = [
-      ('none'               ),
-      ('dbgInt[0]',      's'),
-      ('dbgInt[1]',      's'),
-      ('dbgInt[2]',      's'),
-      ('dbgInt[3]',      's'),
-      ('diff_pressure',  'u'),
-      ('bat_volt',       'u'),
-      ('dpCal',          'u'),
-      ('pres1',          'i'),
-      ('pres2',          'i'),
-      ('pres_diff',      'i'),
-      ('flow_rate',      'i'),
-      ]
+class TraceVar:
+   def __init__( self, id, fmt ):
+      self.id = id;
+      self.fmt = fmt
 
+   # Convert the raw 32-bit value read from memory
+   # into a proper value based on the type of
+   # variable this is
+   def Convert( self, raw ):
+      if( self.fmt == 'u32' ):
+         return raw
+      if( self.fmt == 'i32' ):
+         if( raw & 0x80000000 ):
+            return 2**32-raw
+         return raw
+      if( self.fmt == 'flt' ):
+         return I2F( raw )
+
+      print 'Unknown format: %s' % fmt
+      return None
+
+   def Format( self, dat ):
+      if( self.fmt == 'flt' ):
+         return '% .4f' % dat
+      else:
+         return '% 9d' % dat
+
+# Trace variables
+traceVars = {
+   'none':       TraceVar(  0, '' ),
+   'bat_volt' :  TraceVar(  1, 'flt' ),
+   'pressure1':  TraceVar(  2, 'flt' ),
+   'pressure2':  TraceVar(  3, 'flt' ),
+   'pres_diff':  TraceVar(  4, 'flt' ),
+   'flow_rate':  TraceVar(  5, 'flt' ),
+   'pres_filt1': TraceVar(  6, 'flt' ),
+   'pres_filt2': TraceVar(  7, 'flt' ),
+};
+
+# Find the trace variable given it's ID
+def TraceVarByID( val ):
+   for k in traceVars.keys():
+      if( traceVars[k].id == val ):
+         return traceVars[k]
+
+   # If it's not in my dictionary, just default to unsigned 32-bit
+   return TraceVar( val, 'flt' )
+
+# Most recently set trace variables
+activeTraceVars = [None]*4
 
 class Error(Exception):
    def __init__(self, value):
@@ -139,12 +179,16 @@ class cmdline( cmd.Cmd ):
       ldat = False;
 
       ptype = 'byte'
-      if( param[0] in ['long', 'short'] ):
+      if( param[0] in ['long', 'short', 'float'] ):
          ptype = param[0]
 	 param = param[1:];
 
       addr = param[0]
-      data = [int(x,0) for x in param[1:] ];
+
+      if( ptype == 'float' ):
+         data = [float(x) for x in param[1:] ];
+      else:
+         data = [int(x,0) for x in param[1:] ];
       poke( addr, data, ptype );
 
    def do_get( self, line ):
@@ -159,7 +203,15 @@ class cmdline( cmd.Cmd ):
       val = GetVar( param[0] )
 
       v = varDict[ param[0] ]
-      print v.fmt % val;
+
+      if( isinstance( val, list ) ):
+         S = ''
+         for i in val:
+            S += v.fmt % i + ', '
+         print S
+
+      else:
+         print v.fmt % val;
 
    def complete_get( self, text, line, begidx, endidx ):
       var = text;
@@ -205,25 +257,24 @@ class cmdline( cmd.Cmd ):
          return
 
       dat = GetTrace()
+      if( dat == None ):
+         return
 
       if( line == 'graph' ):
-         TraceGraph()
+         TraceGraph( dat )
 
       if( line == 'download' ):
          fp = open( 'trace.dat', 'w' )
          for j in range(len(dat[0])):
             S = ''
             for i in range(len(dat)):
-               S += '%5d ' % dat[i][j]
+               S += '%e ' % dat[i][j]
             fp.write( S + '\n' )
          fp.close()
 
       if( line == 'mean' ):
          for i in range(len(dat)):
             print '%d: mean %.3f, medial: %.3f std: %.5f' % (i, mean(dat[i]), median(dat[i]), std(dat[i]))
-
-#   def do_reset( self, line ):
-#      SendCmd( OP_RESET )
 
 def FmtPeek( dat, fmt='+XXXX', addr=0 ):
 
@@ -374,6 +425,9 @@ def poke( addr, dat, ptype ):
       dat = Split32(dat);
    if( ptype == 'short' ):
       dat = Split16(dat);
+   if( ptype == 'float' ):
+      dat = [F2I(x) for x in dat]
+      dat = Split32(dat);
 
    SendCmd( OP_POKE, Split32( addr )+dat )
 
@@ -389,7 +443,20 @@ def GetVar( var ):
 
    v = varDict[ var ]
    out = SendCmd( OP_GET, Split16( v.id ) )
-   return MakeInt( out, signed=v.IsSigned() )
+
+   if( v.type in ['u16', 'u32'] ):
+      return MakeInt( out, signed=False )
+
+   if( v.type in  ['i16', 'i32'] ):
+      return MakeInt( out, signed=True )
+
+   if( v.type == 'ary32' ):
+      return Build32( out, signed=True )
+
+   if( v.type == 'aryflt' ):
+      return BuildFlt( out )
+
+   print "Can't handle %s yet" % v.type
 
 def SetVar( var, value ):
    if( not var in varDict ):
@@ -398,10 +465,12 @@ def SetVar( var, value ):
    v = varDict[ var ]
 
    if( var[:9] == 'trace_var' ):
-      for i in range(len(traceVars)):
-         if( value == traceVars[i][0] ):
-            value = i
-            break
+      ndx = int(var[9:])-1
+      if( value in traceVars ):
+         activeTraceVars[ndx] = traceVars[value]
+         value = traceVars[value].id
+      else:
+         activeTraceVars[ndx] = TraceVarByID(value)
 
    if( v.type in ['u16', 'i16'] ):
       bval = Split16( value )
@@ -412,6 +481,10 @@ def SetVar( var, value ):
    elif( v.type == 'ary32' ):
       value = [int(x,0) for x in value.split(',')]
       bval = Split32( value )
+
+   elif( v.type == 'aryflt' ):
+      value = [float(x) for x in value.split(',')]
+      bval = SplitFlt( value )
 
    else:
       print "Sorry, can't handle this one"
@@ -426,16 +499,19 @@ def GetTrace():
    if( n < 1 ):
       return None
 
-   # Find how many trace variables are in use
+   # Find the trace variables current enabled
    vct = 0;
-   signed = []
    for i in range(4):
       v = GetVar( 'trace_var%d' % (i+1) );
-      if( v ):
-         vct += 1;
-         signed.append( traceVars[v][1] )
-      else:
-         break;
+      if( v==0 ):
+         break
+      vct += 1;
+
+      # Find the trace variable object that goes with this ID.
+      # We should already know this unless the trace was setup prior
+      # to starting the interface
+      if( activeTraceVars[i] == None or activeTraceVars[i].id != v ):
+         activeTraceVars[i] = TraceVarByID( v )
 
    if( vct < 1 ):
       return None
@@ -446,15 +522,17 @@ def GetTrace():
    n -= n % vct;
 
    # Read the trace data as one big array
-   dat = peek( 0x20008000, ct=n*2, raw=True )
-   dat = Build16( dat, le=True, signed=True )
+   dat = peek( 0x20006000, ct=n*4, raw=True )
+   dat = Build32( dat, le=True, signed=False )
 
+   # Chop it up into separate arrays for each trace
+   # variable and reformat as necessary
    ret = []
    for i in range(vct):
-      ret.append( dat[i::vct] )
-      if( signed[i] == 'u' ):
-         for j in range(len(ret[i])):
-            if( ret[i][j] < 0 ): ret[i][j] += 65536
+      raw = dat[i::vct]
+      if( activeTraceVars[i] != None ):
+         raw = [activeTraceVars[i].Convert(x) for x in raw]
+      ret.append(raw)
 
    return ret
 
@@ -577,6 +655,7 @@ def SplitInt( val, len=4, le=True, asStr=False ):
 
 def Split16( x, le=True, asStr=False ): return SplitInt( x, 2, le, asStr );
 def Split32( x, le=True, asStr=False ): return SplitInt( x, 4, le, asStr );
+def SplitFlt( x ): return Split32( [F2I(i) for i in x] )
 
 # Utility function to convert bytes to ints
 def MakeInt( bytes, signed=True, le=True ):
@@ -602,6 +681,10 @@ def Build16( dat, le=True, signed=False ):
    for i in range( len(dat)/2 ):
       ret.append( MakeInt( dat[ (2*i):(2*i+2) ], signed=signed, le=le ) );
    return ret;
+
+def BuildFlt( dat ):
+   tmp = Build32( dat, le=True, signed=False )
+   return [I2F(x) for x in tmp]
 
 def GrabElems( dat, ct ):
    if( len(dat) < ct ):

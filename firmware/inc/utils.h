@@ -45,20 +45,28 @@ static inline uint16_t Clip16u( uint32_t val )
    return ret;
 }
 
-static inline uint16_t b2u16( uint8_t x[] )
+static inline uint32_t F2I( float val ){ return *(uint32_t*)&val; }
+static inline float I2F( uint32_t val ){ return *(float*)&val; }
+
+static inline uint16_t b2u16( const uint8_t x[] )
 {
    uint16_t a = x[0];
    uint16_t b = x[1];
    return (b<<8)|a;
 }
 
-static inline uint32_t b2u32( uint8_t x[] )
+static inline uint32_t b2u32( const uint8_t x[] )
 {
    uint32_t a = x[0];
    uint32_t b = x[1];
    uint32_t c = x[2];
    uint32_t d = x[3];
    return a | (b<<8) | (c<<16) | (d<<24);
+}
+
+static inline float b2flt( const uint8_t x[] )
+{
+   return I2F( b2u32(x) );
 }
 
 static inline void u16_2_u8( uint16_t val, uint8_t ret[] )
@@ -75,6 +83,11 @@ static inline void u32_2_u8( uint32_t val, uint8_t ret[] )
    ret[3] = val>>24;
 }
 
+static inline void flt_2_u8( float val, uint8_t ret[] )
+{
+   u32_2_u8( F2I(val), ret );
+}
+
 static inline void BitSet( uint32_t bit, uint32_t *var )
 {
    IntDisable();
@@ -88,7 +101,6 @@ static inline void BitClr( uint32_t bit, uint32_t *var )
    *var &= ~bit;
    IntEnable();
 }
-
 
 #define ARRAY_CT(x)      (sizeof(x)/sizeof(x[0]))
 

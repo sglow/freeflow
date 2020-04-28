@@ -5,9 +5,18 @@ import crc32
 import time
 
 def main():
-   mainsrc = Split( 'main.c cpu.c uart.c sercmd.c ascii.c string.c binary.c buzzer.c encoder.c ' +
+
+   # List of source files used with the full featured flow sensor that includes a display, encoder, etc
+   fullsrc = Split( 'main.c cpu.c uart.c sercmd.c string.c binary.c ascii.c buzzer.c encoder.c ' +
                     'io.c timer.c loop.c adc.c trace.c vars.c pressure.c display.c sprintf.c ui.c ' +
-                    'calc.c store.c flash.c');
+                    'calc.c store.c flash.c usb.c filter.c autooffset.c' );
+
+   # List of source files used on the mini version of the firmware.  This drops the user I/O and just
+   # uses the sensor as a component for a larger system.  It adds a slave I2C interface.
+   minisrc = Split( 'main.c cpu.c uart.c sercmd.c string.c binary.c ascii.c ' +
+                    'io.c timer.c loop.c adc.c trace.c vars.c pressure.c sprintf.c ' +
+                    'calc.c store.c flash.c usb.c filter.c autooffset.c' );
+
    asmsrc = Split( 'startup.s' )
 
    prefix = 'arm-none-eabi'
@@ -21,14 +30,12 @@ def main():
    env['CFLAGS'] = '-mthumb -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -O2 -g -Wall -std=gnu99 -fno-builtin -ffunction-sections -fdata-sections -fsingle-precision-constant -fno-strict-aliasing -mno-unaligned-access'
    env['ASFLAGS'] = '-mthumb -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard '
 
-   #env['CFLAGS'] += ' -S'
-
    env['CCCOMSTR'] = '***** Compiling $TARGET'
    env['ASCOMSTR'] = '***** Assembling $TARGET'
    env['LINKCOMSTR'] = '***** Linking $TARGET'
 
-#   BuildFirmware( env, 'boot', mainsrc, asmsrc, flags='-D BOOT',  link='boot.x' )
-   BuildFirmware( env, 'main', mainsrc, asmsrc, flags='',  link='main.x' )
+   BuildFirmware( env, 'full', fullsrc, asmsrc, flags='-DFULL',  link='main.x' )
+   BuildFirmware( env, 'mini', minisrc, asmsrc, flags='-DMINI',  link='main.x' )
 
 def BuildFirmware( env, name, srcList, asmList, flags='', link='linker.x' ):
    tmp = env.Clone()

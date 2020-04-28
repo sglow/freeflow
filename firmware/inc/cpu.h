@@ -54,6 +54,16 @@ typedef struct
    REG indClkCfg2;               // 0x9C Peripherals independent clock configuration register (RCC_CCIPR2)
 } RCC_Regs;
 
+// Clock recovery system
+#define CRS_BASE                    0x40006000
+typedef struct
+{
+   REG ctrl;
+   REG config;
+   REG status;
+   REG intClr;
+} CRS_Regs;
+
 // Interrupt controller
 #define NVIC_BASE                   0xE000E100
 typedef struct
@@ -65,7 +75,6 @@ typedef struct
    REG  active[64];
    BREG priority[1024];
 } IntCtrl_Regs;
-
 
 // System control registers
 #define SYSCTL_BASE                 0xE000E000
@@ -94,6 +103,20 @@ typedef struct
    REG rsvd4[19];
    REG cpac;                     // 0xE000ED88
 } SysCtrl_Reg;
+
+// Power controller
+#define POWER_BASE                  0x40007000
+typedef struct
+{
+   REG ctrl[4];
+   REG status[2];
+   REG statClr;
+   struct
+   {
+      REG up;
+      REG dn;
+   } pull[6];
+} PwrCtrl_Reg;
 
 // Digital I/O
 #define DIGIO_A_BASE                0x48000000
@@ -285,6 +308,27 @@ typedef struct
 } CRC_Regs;
 
 #define USBFS_BASE                 0x40006800
+typedef struct
+{
+   REG endpoint[8];                // 0x00 - USB endpoint n register (USB_EPnR)
+   REG rsvd[8];
+   REG ctrl;                       // 0x40 - USB control register (USB_CNTR)
+   REG status;                     // 0x44 - USB interrupt status register (USB_ISTR)
+   REG frame;                      // 0x48 - USB frame number register (USB_FNR)
+   REG addr;                       // 0x4C - USB device address (USB_DADDR)
+   REG btable;                     // 0x50 - Buffer table address (USB_BTABLE)
+   REG lpm;                        // 0x54 - LPM control and status register (USB_LPMCSR)
+   REG battery;                    // 0x58 - Battery charging detector (USB_BCDR)
+} USB_Regs;
+
+#define USB_SRAM_BASE              0x40006C00
+typedef struct
+{
+   SREG txAddr;                    // 0x00 - Transmission buffer address n (USB_ADDRn_TX)
+   SREG txCount;                   // 0x02 - Transmission byte count n (USB_COUNTn_TX)
+   SREG rxAddr;                    // 0x04 - Reception buffer address n (USB_ADDRn_RX)
+   SREG rxCount;                   // 0x06 - Reception byte count n (USB_COUNTn_RX)
+} USB_TblEntry;
 
 // inline functions
 #define GPIO_MODE_INPUT    0

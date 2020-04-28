@@ -1,6 +1,7 @@
 /* main.c */
 
 #include "adc.h"
+#include "autooffset.h"
 #include "buzzer.h"
 #include "cpu.h"
 #include "display.h"
@@ -14,6 +15,7 @@
 #include "trace.h"
 #include "uart.h"
 #include "ui.h"
+#include "usb.h"
 #include "utils.h"
 
 int main( void )
@@ -24,10 +26,11 @@ int main( void )
    for( int i=0; i<32; i++ )
       dbgLong[i] = 0;
 
+   SerCmdInfo cmd[2];
+
    // Init the processor and various modules
    CPU_Init();
    StoreInit();
-GPIO_Output( DIGIO_A_BASE, 7, 0 );
    UART_Init();
    BuzzerInit();
    InitEncoder();
@@ -38,7 +41,11 @@ GPIO_Output( DIGIO_A_BASE, 7, 0 );
    TraceInit();
    InitPressure();
    InitDisplay();
-   InitUserInteface();
+   InitUserInterface();
+   InitUSB();
+   InitAutoOffset();
+   InitSerCmd( &cmd[0], 0 );
+//   InitSerCmd( &cmd[1], 1 );
 
    LoopStart();
 
@@ -46,11 +53,25 @@ GPIO_Output( DIGIO_A_BASE, 7, 0 );
    // The higher priority work is done in interrupt handlers.
    while( 1 )
    {
-      PollSerCmd();
+      PollSerCmd( &cmd[0] );
+//      PollSerCmd( &cmd[1] );
       BuzzerPoll();
       PollIO();
-      PollUserInteface();
+      PollUserInterface();
       BkgPollPressure();
+      PollUSB();
    }
 }
 
+// The mini version of the flow sensor doesn't compile in some of the
+// modules that are used in the full version.  I'll just add dummy functions
+// here to prevent link errors
+#ifdef MINI
+void InitDisplay( void ){}
+void InitEncoder( void ){}
+void InitUserInterface( void ){}
+void BuzzerInit( void ){}
+void DispISR( void ){}
+void PollUserInterface( void ){}
+void BuzzerPoll( void ){}
+#endif

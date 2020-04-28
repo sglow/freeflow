@@ -33,12 +33,12 @@ static ScreenFunc screens[] =
 static uint32_t lastUpdt;
 
 // Called once at startup
-void InitUserInteface( void )
+void InitUserInterface( void )
 {
 }
 
 // Called by the background loop
-void PollUserInteface( void )
+void PollUserInterface( void )
 {
    // I update the display every 50ms
    if( LoopsSince( lastUpdt ) < MsToLoop( 50 ) )
@@ -77,11 +77,11 @@ static void SummaryScreen( void )
    int dy = CrntFont()->yAdv;
    int y = 0;
 
-   sprintf( buff, "Flow: % 3d ml/sec", (int)GetPressureFlowRate() );
+   sprintf( buff, "Flow: % 3d ml/sec", (int)GetFlowRate() );
    DrawString( buff, 0, y );
 
    y+= dy;
-   sprintf( buff, "Pres: %4d cm", (int)(GetPressurePSI() * PRESSURE_CM_H2O) );
+   sprintf( buff, "Pres: %4d cm", (int)(GetPressure1() * PRESSURE_CM_H2O) );
    DrawString( buff, 0, y );
 }
 

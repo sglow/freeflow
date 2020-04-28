@@ -21,8 +21,14 @@ static inline uint16_t UsecSince( uint16_t when )
    return tmr->counter - when;
 }
 
-static inline void BusyWait( uint8_t usec )
+static inline void BusyWait( uint16_t usec )
 {
+   while( usec > 1000 )
+   {
+      BusyWait(1000);
+      usec -= 1000;
+   }
+
    uint16_t start = TimerGetUsec();
    while( UsecSince( start ) < usec ){}
 }

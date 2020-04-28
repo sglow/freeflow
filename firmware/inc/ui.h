@@ -3,7 +3,7 @@
 #ifndef _DEF_INC_UI
 #define _DEF_INC_UI
 
-void InitUserInteface( void );
-void PollUserInteface( void );
+void InitUserInterface( void );
+void PollUserInterface( void );
 
 #endif

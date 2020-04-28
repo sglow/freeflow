@@ -1,6 +1,7 @@
 /* loop.c */
 
 #include "adc.h"
+#include "autooffset.h"
 #include "calc.h"
 #include "cpu.h"
 #include "loop.h"
@@ -71,6 +72,7 @@ void LoopISR( void )
 
    AdcRead();
    LoopPollPressure();
+   LoopUpdtOffset();
    UpdateCalculations();
 
    SaveTrace();
