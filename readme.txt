@@ -11,10 +11,6 @@ The project has two potential uses:
   This sensor can be used inline at each patient to allow the emergency workers 
   to regulate flow using flow valves.
 
-Note that I locally maintain my projects using Mercurial (hg) and am pushing to github
-using the hg-git plugin.  There may be some odd files in the repo (like .hgignore) due
-to that.  These can be ignored.
-
 The schematics and layout files here were made using the open source gEDA tools; gschem
 for schematic capture and pcb for layout.  These tools can be downloaded here:
    http://www.geda-project.org/
