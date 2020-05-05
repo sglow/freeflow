@@ -4,6 +4,7 @@
 #define _DEF_INC_BUFFER
 
 #include <stdint.h>
+#include "trace.h"
 
 typedef struct
 {
@@ -11,7 +12,7 @@ typedef struct
    uint8_t buff[128];
 } CircBuff;
 
-static int BuffUsed( CircBuff *cb )
+static inline int BuffUsed( CircBuff *cb )
 {
    int h = cb->head;
    int t = cb->tail;
@@ -21,12 +22,12 @@ static int BuffUsed( CircBuff *cb )
    return ct;
 }
 
-static int BuffFree( CircBuff *cb )
+static inline int BuffFree( CircBuff *cb )
 {
    return sizeof(cb->buff) - 1 - BuffUsed( cb );
 }
 
-static int BuffAddByte( CircBuff *cb, uint8_t dat )
+static inline int BuffAddByte( CircBuff *cb, uint8_t dat )
 {
    uint8_t newHead = cb->head + 1;
    if( newHead >= sizeof(cb->buff) ) 
@@ -40,7 +41,7 @@ static int BuffAddByte( CircBuff *cb, uint8_t dat )
    return 1;
 }
 
-static int BuffAdd( CircBuff *cb, uint8_t *dat, int ct )
+static inline int BuffAdd( CircBuff *cb, uint8_t *dat, int ct )
 {
    int tot = BuffFree( cb );
    if( tot > ct ) tot = ct;
@@ -55,7 +56,7 @@ static int BuffAdd( CircBuff *cb, uint8_t *dat, int ct )
    return tot;
 }
 
-static int BuffGetByte( CircBuff *cb )
+static inline int BuffGetByte( CircBuff *cb )
 {
    if( cb->head == cb->tail )
       return -1;
@@ -67,7 +68,7 @@ static int BuffGetByte( CircBuff *cb )
    return ret;
 }
 
-static int BuffGet( CircBuff *cb, uint8_t *dat, int max )
+static inline int BuffGet( CircBuff *cb, uint8_t *dat, int max )
 {
    int tot = BuffUsed( cb );
    if( tot > max ) tot = max;

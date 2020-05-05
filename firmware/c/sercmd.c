@@ -50,7 +50,7 @@ void InitSerCmd( SerCmdInfo *info, int usb )
 static inline int SendByte( SerCmdInfo *info, uint8_t ch )
 {
    if( info->usb )
-      return USB_SendByte( ESC );
+      return USB_SendByte( ch );
    else
       return UART_SendByte( ch );
 }
@@ -71,7 +71,7 @@ static inline int RecvByte( SerCmdInfo *info )
       return UART_Recv();
 }
 
-static inline int TxFree( SerCmdInfo *info, uint8_t ch )
+static inline int TxFree( SerCmdInfo *info )
 {
    if( info->usb )
       return USB_TxFree();
@@ -195,39 +195,39 @@ info->flag |= FLG_BINARY;
       // Sending a response to a binary command
       case STATE_SEND_BINARY_RSP:
 
-         // If there's no data left to send, then just send the
-         // EOC character and start waiting for the next command
-         if( !info->rspLen )
+         while( info->rspLen )
          {
-            if( SendByte( info, EOC ) )
-               info->state = START_NEW_CMD;
-            return;
-         }
+            // See what the next character to send is.
+            int ch = info->buff[ info->cmdNdx ];
 
-         // See what the next character to send is.
-         int ch = info->buff[ info->cmdNdx ];
-
-         // If it's a special character, I need to escape it.
-         // I'll only do that if there are at least two spots 
-         // in the transmit buffer to keep things simple here
-         if( (ch == ESC) || (ch == EOC) )
-         {
-            if( UART_TxFree() >= 2 )
+            // If it's a special character, I need to escape it.
+            // I'll only do that if there are at least two spots 
+            // in the transmit buffer to keep things simple here
+            if( (ch == ESC) || (ch == EOC) )
             {
+               if( TxFree( info ) < 2 )
+                  return;
                SendByte( info, ESC );
                SendByte( info, ch );
                info->cmdNdx++;
                info->rspLen--;
-            }
-            return;
-         } 
+            } 
 
-         // Otherwise, just send the byte
-         if( SendByte( info, ch ) )
-         {
-            info->rspLen--;
-            info->cmdNdx++;
+            // Otherwise, just send the byte
+            else if( SendByte( info, ch ) )
+            {
+               info->rspLen--;
+               info->cmdNdx++;
+            }
+            else
+               return;
          }
+
+         // If there's no data left to send, then just send the
+         // EOC character and start waiting for the next command
+         if( SendByte( info, EOC ) )
+            info->state = START_NEW_CMD;
+
          return;
    }
 }

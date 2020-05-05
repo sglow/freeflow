@@ -45,7 +45,7 @@ int main( void )
    InitUSB();
    InitAutoOffset();
    InitSerCmd( &cmd[0], 0 );
-//   InitSerCmd( &cmd[1], 1 );
+   InitSerCmd( &cmd[1], 1 );
 
    LoopStart();
 
@@ -54,7 +54,7 @@ int main( void )
    while( 1 )
    {
       PollSerCmd( &cmd[0] );
-//      PollSerCmd( &cmd[1] );
+      PollSerCmd( &cmd[1] );
       BuzzerPoll();
       PollIO();
       PollUserInterface();

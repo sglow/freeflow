@@ -119,10 +119,21 @@ void PollUSB( void )
    {
       USB_TblEntry *usbTbl = (USB_TblEntry *)USB_SRAM_BASE;
 
-      int ct = BuffGet( &txBuff, (uint8_t *)(USB_SRAM_BASE + usbTbl[3].txAddr), 63 );
+      int ct = BuffUsed( &txBuff );
+      int wct = (ct+1)/2;
+
+      uint16_t *ptr =  (uint16_t *)(USB_SRAM_BASE + usbTbl[3].txAddr);
+
+      for( int i=0; i<wct; i++ )
+      {
+         uint16_t l = BuffGetByte( &txBuff );
+         uint16_t h = BuffGetByte( &txBuff );
+         if( h & 0xFF00 ) h = 0;
+         *ptr++ = (h<<8) | l;
+      }
+
       if( ct )
       {
-DbgTrace( 1, ct, 0 );
          usbTbl[3].txCount = ct;
          SetEpTxStat( 3, EPSTAT_VALID );
       }
@@ -474,9 +485,9 @@ static int HandleSetConfig( USBrqst *rqst )
    USB_Regs *usb = (USB_Regs *)USBFS_BASE;
    if( !usb->addr ) return ERR_RANGE;
 
-   usb->endpoint[1]  = 0x0300;
-   usb->endpoint[2]  = 0x0000;
-   usb->endpoint[2]  = 0x0000;
+   usb->endpoint[1]  = 0x0301;
+   usb->endpoint[2]  = 0x0002;
+   usb->endpoint[3]  = 0x0003;
 
    SetEpRxStat( 1, EPSTAT_NAK );
    SetEpTxStat( 1, EPSTAT_NAK );
