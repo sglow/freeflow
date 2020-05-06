@@ -595,11 +595,9 @@ static void HandleRecv( int N )
 {
    ClearEpStat( N, 0x8000 );
 
-DbgTrace( 0x10, N, 0 );
    if( N == 2 )
    {
       USB_TblEntry *usbTbl = (USB_TblEntry *)USB_SRAM_BASE;
-DbgTrace( 0x11, usbTbl[N].rxCount, 0 );
       uint8_t *ptr = (uint8_t*)(USB_SRAM_BASE + usbTbl[N].rxAddr);
       BuffAdd( &rxBuff, ptr, usbTbl[N].rxCount & 0x01FF );
       SetEpRxStat( N, EPSTAT_VALID );
@@ -625,8 +623,6 @@ static void HandleXfer( void )
 {
    USB_Regs *usb = (USB_Regs *)USBFS_BASE;
    int ep = usb->status & 0x000F;
-
-if( ep ) DbgTrace( 0x20, ep, usb->status );
 
    if( usb->endpoint[ep] & 0x8000 )
    {

@@ -16,6 +16,10 @@
 #define CMD_POKE              2
 #define CMD_GET               3
 #define CMD_SET               4
+#define CMD_SWAP              5
+#define CMD_ERASE_FW          6
+#define CMD_WRITE_FW          7
+#define OP_SAVE_FWCRC         8
 
 // prototypes
 int ProcessBinaryCmd( uint8_t *cmd, int ct, int max );

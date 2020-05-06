@@ -13,6 +13,9 @@
 #define FLASH_SIZE         0x00020000
 #define FLASH_PAGE_LEN     0x00000800
 
+#define MAIN_FW_START      0x08004000
+#define MAIN_FW_END        0x08018000
+
 // Interrupt vectors.  These are the offset of the interrupt in the 
 // vector table divided by 4
 // The interrupt vector table can be found in the reference manual 
@@ -303,6 +306,7 @@ typedef struct
    REG data;
    REG scratch;
    REG ctrl;
+   REG rsvd;
    REG init;
    REG poly;
 } CRC_Regs;
@@ -418,5 +422,8 @@ static inline void GPIO_PullDn( uint32_t bank, int pin )
 // Prototypes
 void CPU_Init( void );
 void EnableInterrupt( int id, int pri );
+void Reset( void );
+void SwapMode( void );
+int CheckSwap( void );
 
 #endif

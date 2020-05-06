@@ -200,7 +200,7 @@ static int CheckStruct( uint32_t addr )
 // This chip happens to have a hardware CRC generator, so I'll use that.
 static uint32_t BlockCRC( void *blk )
 {
-   CRC_Regs *crc = (CRC_Regs *)crc;
+   CRC_Regs *crc = (CRC_Regs *)CRC_BASE;
 
    // Reset the CRC unit
    crc->ctrl = 1;

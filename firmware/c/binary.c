@@ -1,7 +1,9 @@
 /* binary.c */
 
 #include "binary.h"
+#include "cpu.h"
 #include "errors.h"
+#include "firmware.h"
 #include "string.h"
 #include "trace.h"
 #include "utils.h"
@@ -64,6 +66,20 @@ int ProcessBinaryCmd( uint8_t *cmd, int len, int max )
          case CMD_POKE:
             return HandlePoke( cmd, len, max );
 
+         case CMD_SWAP:
+            SwapMode();
+            return 0;
+
+#ifdef BOOT
+         case CMD_ERASE_FW:
+            return HandleFwErase( cmd, len, max );
+
+         case CMD_WRITE_FW:
+            return HandleFwWrite( cmd, len, max );
+
+         case OP_SAVE_FWCRC:
+            return HandleFwCRC( cmd, len, max );
+#endif
          case CMD_GET:
             return HandleVarGet( cmd, len, max );
 

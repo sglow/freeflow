@@ -15,7 +15,7 @@ parser.add_option( "--verbose", dest="verbose", help='Get chatty', default=False
 
 
 def main():
-   elfFile = 'mini.elf'
+   elfFile = 'boot.elf'
    if( len(args) ):
       elfFile = args[0]
 
@@ -30,7 +30,7 @@ def main():
    print 'Boot loader version: 0x%02x' % info[0]
 
    print 'Erasing flash'
-   if( not Erase( ser, pages=range(48) ) ):
+   if( not Erase( ser, pages=range(8) ) ):
       print 'Erase failed'
       return
 

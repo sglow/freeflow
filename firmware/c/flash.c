@@ -5,6 +5,8 @@
 #include "flash.h"
 #include "utils.h"
 
+#include "trace.h"
+
 #define FLASH_END       (FLASH_START+FLASH_SIZE)
 
 // Erase the page of flash at this address

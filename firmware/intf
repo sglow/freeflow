@@ -7,6 +7,7 @@ import matplotlib;
 import matplotlib.pyplot as plt;
 import math;
 import cmd;
+import elffile
 import glob;
 import os;
 import serial
@@ -16,11 +17,15 @@ import traceback
 
 plt.ion()
 
-OP_MODE    = 0
-OP_PEEK    = 1
-OP_POKE    = 2
-OP_GET     = 3
-OP_SET     = 4
+OP_MODE       = 0
+OP_PEEK       = 1
+OP_POKE       = 2
+OP_GET        = 3
+OP_SET        = 4
+OP_SWAP       = 5
+OP_ERASE_FW   = 6
+OP_WRITE_FW   = 7
+OP_SAVE_FWCRC = 8
 
 TERM = 0xf1
 ESC  = 0xf2
@@ -35,6 +40,7 @@ ser = serial.Serial( port=port, baudrate=115200 )
 ser.timeout = 0.8
 
 fwname = 'mini.elf'
+showSerial = False;
 
 varDict = {}
 
@@ -128,7 +134,11 @@ class Error(Exception):
 class cmdline( cmd.Cmd ):
    def __init__( self ):
       cmd.Cmd.__init__( self );
-      self.prompt = '] ';
+      mode = SendCmd( OP_MODE )
+      if( mode[0] == 1 ):
+         self.prompt = 'BOOT] ';
+      else:
+         self.prompt = '] ';
       self.cmdloop();
 
    def cmdloop( self ):
@@ -141,6 +151,10 @@ class cmdline( cmd.Cmd ):
             traceback.print_exc()
 	    #print sys.exc_info()
 	    pass;
+
+   def do_debug( self, line ):
+      global showSerial
+      showSerial = not showSerial
 
    def do_run( self, line ):
       p = str.split(line);
@@ -276,6 +290,69 @@ class cmdline( cmd.Cmd ):
          for i in range(len(dat)):
             print '%d: mean %.3f, medial: %.3f std: %.5f' % (i, mean(dat[i]), median(dat[i]), std(dat[i]))
 
+   def do_flash( self, line ):
+      line = line.strip();
+      if( len(line) < 1 ):
+         print 'Please pass the name if the firmware file'
+         return
+
+      if( SendCmd( OP_MODE )[0] != 1 ):
+         print 'Swapping to boot mode'
+         dat = SendCmd( OP_SWAP, timeout=.1 )
+
+      if( SendCmd( OP_MODE )[0] != 1 ):
+         print 'Failure jumping to boot mode'
+         return
+
+      elf = elffile.ElfFile( line )
+
+      print 'Erasing exiting firmware'
+      SendCmd( OP_ERASE_FW, timeout=10 )
+
+      done = False
+      for s in elf.sect:
+         if( s.addr < 1 or len(s.data) < 1 ):
+            continue
+
+         if( done ):
+            print 'Error, at the moment I only handle one section.'
+            break
+
+         print 'Writing %d bytes to 0x%08x' % (len(s.data), s.addr)
+
+         dat = s.data[:];
+         done = True
+
+         while( len(dat) & 7 ): 
+            dat.append(0xff)
+
+         L = len(dat)
+         crc = CRCutil().calc(dat)
+
+         A = s.addr;
+         while( len(dat) ):
+            ct = min(128, len(dat))
+            d = dat[:ct]
+            dat = dat[ct:]
+
+            if( SendCmd( OP_WRITE_FW, Split32(A)+d ) == None ):
+               break
+            A += ct
+
+      if( not done ):
+         print 'No writable sections in the elf file'
+         return 
+
+      if( SendCmd( OP_SAVE_FWCRC, Split32(L)+Split32(crc) ) == None ):
+         print 'Error saving firmware CRC'
+
+      print 'Swaping back to normal mode'
+      SendCmd( OP_SWAP, timeout=.1 )
+      if( SendCmd( OP_MODE )[0] != 0 ):
+         print 'Failure jumping back to normal mode'
+
+
+
 def FmtPeek( dat, fmt='+XXXX', addr=0 ):
 
    fmtInfo = {
@@ -318,7 +395,6 @@ def FmtPeek( dat, fmt='+XXXX', addr=0 ):
 
 elfFiles = {}
 def loadElf( fname ):
-   import elffile
    global elfFiles
 
    ct = os.stat( fname ).st_ctime
@@ -599,9 +675,9 @@ def GetResp( show=False ):
          return dat
       dat.append(x)
 
-def SendCmd( op, data=[] ):
-   show = False
-   global ser
+def SendCmd( op, data=[], timeout=None ):
+   global showSerial, ser
+   show = showSerial
    buff = [op] + data
    buff.insert( 1,Cksum(buff) )
 
@@ -617,17 +693,26 @@ def SendCmd( op, data=[] ):
       print S
 
    ser.write( ''.join( [chr(x) for x in buff]) )
+   if( timeout != None ):
+      if( show ):
+         print 'Setting timeout to %.1f' % timeout
+      oldto = ser.timeout
+      ser.timeout = timeout
+
    rsp = GetResp( show )
+   if( timeout != None ):
+      ser.timeout = oldto
+
    if( len(rsp) < 1 ):
       return rsp
    if( Cksum(rsp) ):
       print 'Checksum error on response'
-      return []
+      return None
 
    if( len(rsp)>0 and rsp[0] ):
       #raise Error( "Error %d (0x%02x)" % (rsp[0],rsp[0]) )
       print "Error %d (0x%02x)" % (rsp[0],rsp[0]);
-      return []
+      return None
    return rsp[2:]
 
 def I2F( ival ):
@@ -722,6 +807,30 @@ def std( dat ):
    for i in dat:
       x += (i-m)**2
    return math.sqrt( x/len(dat) )
+
+class CRCutil:
+   def __init__( self, poly=0xEDB88320 ):
+      self.InitTable( poly )
+
+   def calc( self, dat, init=0 ):
+      crc = ~init & 0xFFFFFFFF;
+      for d in dat:
+         a = 0x00FF & (d^crc);
+         crc = self.tbl[a] ^ (crc>>8);
+      return ~crc & 0x00FFFFFFFF;
+
+   def InitTable( self, poly ):
+      self.tbl = []
+
+      for i in range(256):
+         crc = i;
+
+         for j in range(8):
+            lsbSet = crc & 1
+            crc >>= 1;
+            if( lsbSet ):
+               crc ^= poly;
+         self.tbl.append( crc )
 
 cmdline();
 

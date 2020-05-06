@@ -100,12 +100,60 @@ void DisableInterrupt( int id )
    nvic->clrEna[ id>>5 ] = 1<<(id&0x1F);
 }
 
-//void Reset( void )
-//{
-//   // Reset 
-//   SysCtrl_Reg *sysCtl = (SysCtrl_Reg *)SYSCTL_BASE;
-//   sysCtl->apInt = 0x05FA0004;
-//}
+void Reset( void )
+{
+   // Reset 
+   SysCtrl_Reg *sysCtl = (SysCtrl_Reg *)SYSCTL_BASE;
+   sysCtl->apInt = 0x05FA0004;
+}
+
+// Switch between boot mode and normal mode
+#define SWAP1       0x12345678
+#define SWAP2       0x20200504
+#define SWAP3       0x33651260
+#define SWAP_ADDR   0x20009FF0
+void SwapMode( void )
+{
+   IntDisable();
+#ifdef BOOT
+//   WatchdogInit();
+
+   uint32_t addr = MAIN_FW_START;
+
+   // Move the interrupt vector table to the start of main flash
+   SysCtrl_Reg *sysCtl = (SysCtrl_Reg *)SYSCTL_BASE;
+   sysCtl->vtable = addr;
+
+   asm volatile ( 
+   "ldr  sp, [%[addr]]\n\t"
+   "ldr  r0, [%[addr], #4]\n\t"
+   "blx  r0\n":: [addr] "r" (addr) );
+
+#else
+   // Just write some arbitrary constants to memory
+   // I'll use those on boot to see if this was a 
+   // swap vs normal power-up
+   REG *swapInfo = (REG *)SWAP_ADDR;
+   swapInfo[0] = SWAP1;
+   swapInfo[1] = SWAP2;
+   swapInfo[2] = SWAP3;
+   Reset();
+#endif
+}
+
+// Called at startup to see if the reset was caused by 
+// a SwapMode call
+int CheckSwap( void )
+{
+   REG *swapInfo = (REG *)SWAP_ADDR;
+   if( swapInfo[0] != SWAP1 ) return 0;
+   if( swapInfo[1] != SWAP2 ) return 0;
+   if( swapInfo[2] != SWAP3 ) return 0;
+   swapInfo[0] = 0;
+   swapInfo[1] = 0;
+   swapInfo[2] = 0;
+   return 1;
+}
 
 // Interrupt vector table.
 extern void ResetVect( void );

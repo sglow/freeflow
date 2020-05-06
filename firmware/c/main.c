@@ -6,6 +6,7 @@
 #include "cpu.h"
 #include "display.h"
 #include "encoder.h"
+#include "firmware.h"
 #include "io.h"
 #include "loop.h"
 #include "pressure.h"
@@ -17,6 +18,10 @@
 #include "ui.h"
 #include "usb.h"
 #include "utils.h"
+
+#ifdef BOOT
+static void JumpToMainFirmware( void );
+#endif
 
 int main( void )
 {
@@ -30,6 +35,11 @@ int main( void )
 
    // Init the processor and various modules
    CPU_Init();
+
+#ifdef BOOT
+   JumpToMainFirmware();
+#endif
+
    StoreInit();
    UART_Init();
    BuzzerInit();
@@ -66,7 +76,7 @@ int main( void )
 // The mini version of the flow sensor doesn't compile in some of the
 // modules that are used in the full version.  I'll just add dummy functions
 // here to prevent link errors
-#ifdef MINI
+#if defined(MINI) || defined(BOOT)
 void InitDisplay( void ){}
 void InitEncoder( void ){}
 void InitUserInterface( void ){}
@@ -74,4 +84,36 @@ void BuzzerInit( void ){}
 void DispISR( void ){}
 void PollUserInterface( void ){}
 void BuzzerPoll( void ){}
+#endif
+
+// The boot loader drops even more modules
+#ifdef BOOT
+//void AdcInit( void ){}
+//void TraceInit( void ){}
+//void InitPressure( void ){}
+//void BkgPollPressure( void ){}
+//void InitAutoOffset( void ){}
+//void StoreInit( void ){}
+//void LoopInit( void ){}
+//void LoopStart( void ){}
+//void LoopISR( void ){}
+//void SPI1_ISR( void ){}
+//uint32_t GetLoopCt( void ){ return 0; }
+
+// The boot loader calls this just after starting up
+// It checks the main firmware CRC and if valid jumps
+// to that code.
+static void JumpToMainFirmware( void )
+{
+   // Check to see if the main firmware jumped to the 
+   // boot loader intentionally.  If so we won't jump back.
+   if( CheckSwap() )
+      return;
+
+   if( !CheckFwCRC() )
+      return;
+
+   SwapMode();
+   return;
+}
 #endif
