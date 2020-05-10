@@ -50,6 +50,7 @@ int VarInit( VarInfo *info, uint16_t id, const char *name, int type, void *ptr, 
          break;
 
       case VAR_TYPE_INT32:
+      case VAR_TYPE_FLOAT:
          info->get = VarGet32;
          info->set = VarSet32;
          info->size = sizeof(uint32_t);

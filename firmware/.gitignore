@@ -2,3 +2,6 @@
 *.map
 *.elf
 junk/
+obj/
+scripts/
+util/

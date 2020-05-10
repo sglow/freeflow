@@ -11,6 +11,7 @@
 #include "loop.h"
 #include "pressure.h"
 #include "sercmd.h"
+#include "sprintf.h"
 #include "store.h"
 #include "timer.h"
 #include "trace.h"
@@ -55,21 +56,33 @@ int main( void )
    InitUSB();
    InitAutoOffset();
    InitSerCmd( &cmd[0], 0 );
-   InitSerCmd( &cmd[1], 1 );
+//   InitSerCmd( &cmd[1], 1 );
 
    LoopStart();
 
    // The main loop handles lower priority background tasks
    // The higher priority work is done in interrupt handlers.
+uint16_t lastSend = TimerGetUsec();
    while( 1 )
    {
       PollSerCmd( &cmd[0] );
-      PollSerCmd( &cmd[1] );
+//      PollSerCmd( &cmd[1] );
       BuzzerPoll();
       PollIO();
       PollUserInterface();
       BkgPollPressure();
       PollUSB();
+
+      // This is a temporary hack to stream data out the USB serial port
+      // when it's open.
+if( UsecSince( lastSend ) > 10000 )
+{
+   lastSend = TimerGetUsec();
+      char buff[80];
+      int len = sprintf( buff, "SLM: %5.3f\tPRS: % %5.2f\n", F2I(GetFlowRate()), F2I(GetPressure1()*PRESSURE_CM_H2O) );
+      if( USB_TxFree() >= len )
+         USB_Send( (uint8_t*)buff, len );
+}
    }
 }
 
@@ -88,17 +101,6 @@ void BuzzerPoll( void ){}
 
 // The boot loader drops even more modules
 #ifdef BOOT
-//void AdcInit( void ){}
-//void TraceInit( void ){}
-//void InitPressure( void ){}
-//void BkgPollPressure( void ){}
-//void InitAutoOffset( void ){}
-//void StoreInit( void ){}
-//void LoopInit( void ){}
-//void LoopStart( void ){}
-//void LoopISR( void ){}
-//void SPI1_ISR( void ){}
-//uint32_t GetLoopCt( void ){ return 0; }
 
 // The boot loader calls this just after starting up
 // It checks the main firmware CRC and if valid jumps

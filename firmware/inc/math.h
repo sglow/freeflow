@@ -17,4 +17,13 @@ static inline float fabsf( float in )
    return ret;
 }
 
+float powf( float x, float y );
+int isnanf( float f );
+int isinff( float f );
+float frexpf(float x, int *pw2);
+float ldexpf( float x, int pw2 );
+float logf(float x);
+float log10f(float x);
+float floorf( float in );
+
 #endif

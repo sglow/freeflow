@@ -86,8 +86,10 @@ static inline int TxFree( SerCmdInfo *info )
 // processor and then sends the response back out the UART
 void PollSerCmd( SerCmdInfo *info )
 {
-// temp
-info->flag |= FLG_BINARY;
+   // NOTE - I'm planning to add support for an ASCII interface in the future, 
+   // but for right now I'm just supporting the binary one.
+   info->flag |= FLG_BINARY;
+
    switch( info->state )
    {
       // Start of a new command.

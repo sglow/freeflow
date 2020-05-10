@@ -39,6 +39,9 @@ static int SetOffsetTime( VarInfo *info, uint8_t *buff, int len );
 static int SetPresOff( VarInfo *info, uint8_t *buff, int len );
 static int SetCalData( VarInfo *info, uint8_t *buff, int len );
 static int GetCalData( VarInfo *info, uint8_t *buff, int len );
+static int GetVarFlow( VarInfo *info, uint8_t *buff, int max );
+static int GetP1CmH2O( VarInfo *info, uint8_t *buff, int max );
+static int GetP2CmH2O( VarInfo *info, uint8_t *buff, int max );
 
 // local data
 static uint16_t isrLastRead;
@@ -50,6 +53,7 @@ static VarInfo varPressure[2];
 static VarInfo varPoffset[2];
 static VarInfo varOffCalc;
 static VarInfo varPresCal;
+static VarInfo varFlow;
 static uint32_t pOff[2];
 static uint32_t offSum[2];
 static uint32_t flags;
@@ -60,12 +64,13 @@ static float calData[CAL_POINTS];
 void InitPressure( void )
 {
    // Init some variables
-   VarInit( &varPressure[0], VARID_PRESSURE1,   "pressure1", VAR_TYPE_INT32, &padj[0], VAR_FLG_READONLY );
-   VarInit( &varPressure[1], VARID_PRESSURE2,   "pressure2", VAR_TYPE_INT32, &padj[1], VAR_FLG_READONLY );
+   VarInit( &varPressure[0], VARID_PRESSURE1,   "pressure1", VAR_TYPE_FLOAT, &padj[0], VAR_FLG_READONLY );
+   VarInit( &varPressure[1], VARID_PRESSURE2,   "pressure2", VAR_TYPE_FLOAT, &padj[1], VAR_FLG_READONLY );
    VarInit( &varPoffset[0],  VARID_POFF1,       "poff1",     VAR_TYPE_INT32, &pOff[0], 0 );
    VarInit( &varPoffset[1],  VARID_POFF2,       "poff2",     VAR_TYPE_INT32, &pOff[1], 0 );
    VarInit( &varPresCal,     VARID_PCAL,        "prescal",   VAR_TYPE_ARY32, &calData, 0 );
    VarInit( &varOffCalc,     VARID_POFF_CALC,   "poffcalc",  VAR_TYPE_INT16, &offCalcTime, 0 );
+   VarInit( &varFlow,        VARID_FLOW,        "flow",      VAR_TYPE_FLOAT, 0, VAR_FLG_READONLY );
 
    varOffCalc.set = SetOffsetTime;
    varPresCal.set = SetCalData;
@@ -73,6 +78,9 @@ void InitPressure( void )
    varPresCal.size = 4*CAL_POINTS;
    varPoffset[0].set = SetPresOff;
    varPoffset[1].set = SetPresOff;
+   varFlow.get       = GetVarFlow;
+   varPressure[0].get = GetP1CmH2O;
+   varPressure[1].get = GetP2CmH2O;
 
    // Configure the pins for SPI use
    GPIO_PinAltFunc( DIGIO_A_BASE, 6, 5 );
@@ -159,6 +167,30 @@ float GetFlowRate( void )
    return 100 * ARRAY_CT(calData);
 }
 
+static int GetVarFlow( VarInfo *info, uint8_t *buff, int max )
+{
+   // Make sure there's at least two bytes of space in the passed buffer
+   if( max < sizeof(int32_t) )
+      return ERR_MISSING_DATA;
+
+   flt_2_u8( GetFlowRate(), buff );
+   return ERR_OK;
+}
+
+static int GetP1CmH2O( VarInfo *info, uint8_t *buff, int max )
+{
+   float p = RawPressureToKpa( padj[0] ) * PRESSURE_CM_H2O;
+   flt_2_u8( p, buff );
+   return ERR_OK;
+}
+
+static int GetP2CmH2O( VarInfo *info, uint8_t *buff, int max )
+{
+   float p = RawPressureToKpa( padj[1] ) * PRESSURE_CM_H2O;
+   flt_2_u8( p, buff );
+   return ERR_OK;
+}
+
 // This is called by the low priority background task
 void BkgPollPressure( void )
 {
@@ -226,16 +258,10 @@ void SPI1_ISR( void )
       case STATE_READ1L:
          praw[0] = 0x00FFFFFF & ((((uint32_t)isrLastRead)<<16) | value);
          padj[0] = praw[0] - pOff[0];
-#ifdef REV2
          SelectSensor( 2 );
          pressureState = STATE_READ2H;
          spi->data = 0xAA00;
          spi->data = 0x0000;
-#else
-         SelectSensor( 0 );
-         pressureState = STATE_IDLE;
-         flags |= FLG_NEW_READING;
-#endif
          return;
 
       case STATE_READ2H:
@@ -284,10 +310,6 @@ static int SetOffsetTime( VarInfo *info, uint8_t *buff, int len )
    offSum[1] = 0;
    offCalcCount = 0;
    IntEnable();
-
-#ifndef REV2
-   AdcSetOffCalc( offCalcTime );
-#endif
 
    return 0;
 }
